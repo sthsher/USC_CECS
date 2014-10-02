@@ -1051,7 +1051,7 @@ public class CalendarApp extends JFrame{
 					writer = new BufferedWriter(new FileWriter(saveFile));
 					
 					//write titles first
-					writer.append("Year,Month,Date,Title,Location,Start Time, End Time\n");
+					writer.append("Year,Month,Title,Location,Start Time, End Time\n");
 					
 					for (int i = 0; i < eventArray.size(); ++i){
 						writer.append(eventArray.get(i).write());

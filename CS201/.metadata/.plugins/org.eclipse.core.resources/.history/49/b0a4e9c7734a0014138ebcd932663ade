@@ -837,10 +837,6 @@ public class CalendarApp extends JFrame{
 		int prevMonthCounter = prevNumOfDays-startingDate+1;
 		
 		for (int i = 0; i < 42; ++i){
-			//reset icons and event boolean
-			dateButtonArray.get(i).setIcon(null);
-			dateButtonArray.get(i).hasEvent = false;
-			
 			if (i < startingDate){
 				dateButtonArray.get(i).setText("" + prevMonthCounter++);
 				dateButtonArray.get(i).inMonth = false;
@@ -870,6 +866,7 @@ public class CalendarApp extends JFrame{
 				dateButtonArray.get(i).setForeground(Color.GRAY);
 			}
 			
+
 			//Color panels
 			//priority: current Date
 			if (dateCounter-1 == currentDate && month == currentMonth && year == currentYear){
@@ -1049,9 +1046,6 @@ public class CalendarApp extends JFrame{
 				}
 				try{
 					writer = new BufferedWriter(new FileWriter(saveFile));
-					
-					//write titles first
-					writer.append("Year,Month,Date,Title,Location,Start Time, End Time\n");
 					
 					for (int i = 0; i < eventArray.size(); ++i){
 						writer.append(eventArray.get(i).write());
