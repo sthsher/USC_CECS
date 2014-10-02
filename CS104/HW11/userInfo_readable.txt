@@ -1,0 +1,40 @@
+Username: sIsabella
+Password: Character
+Birthday: 11/10/1954
+
+Username: eOlivia
+Password: mask
+Birthday: 5/16/1970
+
+Username: aEmily
+Password: From
+Birthday: 6/13/1978
+
+Username: aMadison
+Password: Wikipedia,
+Birthday: 9/16/1967
+
+Username: mChloe
+Password: the
+Birthday: 5/11/1980
+
+Username: eElla
+Password: free
+Birthday: 3/21/1929
+
+Username: aNatalie
+Password: encyclopedia 
+Birthday: 6/7/1968
+
+Username: lGrace
+Password: Jump
+Birthday: 10/15/1996
+
+Username: aSamantha
+Password: to:
+Birthday: 9/20/1993
+
+Username: sAubrey
+Password: navigation,
+Birthday: 10/31/1989
+

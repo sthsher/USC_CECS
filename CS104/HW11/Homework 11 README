@@ -1,0 +1,91 @@
+Homework 11 README
+
+*******************
+	Files
+*******************
+
+<user_info_file.txt> is the text file that the program reads as the database information. Please do not tamper with it unless you intend to do so while retaining the format
+
+<userInfo_readable.txt> is the text file containing all the users and their information in <user_info_file.txt> in a more readable format. You will need this file when testing question 6.
+
+*******************
+	Makefile
+*******************
+
+Simply type "make" to make all the necessary classes.
+"make clean" will remove all the object and executible files
+
+
+*******************
+	Question 2
+*******************
+
+Username has been implemented. For simplicity's sake, all the usernames in the default database is the first letter of the first name (in lower case) and the last name (with Uppercase for the first letter). For example, "Stephen Sher"'s username will be "sSher".
+
+Sherbook will not accept a new user with a username that already exists, but will accept a user with the same name
+
+Searching for a user will remain with the method of searching their name, and not their username. This is because in a social setting people will be exchanging names, rather than exchanging their username.
+
+*******************
+	Question 3
+*******************
+
+All passwords are stored encrypted.
+
+---IMPORTANT NOTE: Please read carefully---
+The MD5 algorithm is taken directly from Wikipedia:
+	<http://en.wikipedia.org/wiki/MD5>
+
+I acknowledge the fact that this is not my work but someone else's.
+I decided to do this because for the following reasons:
+
+	1. I still have finals to study for, and I'd rather spend my time studying finals than trying to figure out how MD5 or SHA1 works (already tried for a couple of hours, with no promising result)
+	2. My original plan is to first use Wikipedia's code for MD5, and if I have extra time, go back and make my own MD5 algorithm. As it turns out, I don't have that extra time
+
+Feel free to mark this section with no marks at all. I just wanted my social network to have a functioning encryption system. 
+
+Again, I acknowledge the fact that the MD5 algorithm is not my work, and I give all the credit to the algorithm on Wikipedia.
+
+However, I did make some adjustments. I altered the functionality of the MD5 such that it does not take in an argument from the command line, and I used fprinf function to print the encrypted hex into a document, then read the document to get the encryption as a string rather than an array of hex, and finally deleted the document to avoid unnecessary files.
+
+If possible, partial marks would be appreciated. If not, that is completely understandable. I'll accept zero marks for this question.
+
+*******************
+	Question 4
+*******************
+
+Hashtable implemented without any problems. They key is the username, which is stored as a class userKey that contains a hash method.
+
+Searching users can be done by searching for their name (or part of their name) or searching a username (very fast, but must require exact username). These two methods are given in the account menu.
+
+*******************
+	Question 5
+*******************
+
+This functionality appears as option 9 in the account menu. First search for a user by their name and select a user to analyze the degree of separation.
+
+If there is no path, an exception will be thrown and caught by the program.
+
+I didn't bother implementing the paths becuase, well, I need to study for finals.
+
+*******************
+	Question 6
+*******************
+
+My functionality is a username retrieval / reminder and password-reset functionality. In the login screen you can type the word "reminder" to start the process. The user can either choose to reset their password if they forgot their password or retrieve their username.
+
+The process will ask the user to enter their first name and last name, and confirm their brithday, and answer their security question that they made in the create account process.
+
+
+Also, as with all my previous versions of the social network, I have an admin menu, where if you type in "admin" as both the username and password in the login screen, you can access the admin menu where you can view all the users and delete any users. While this is an extra functionality, I have it since HW3. Any additional marks to question 6 for the admin functionality will be appreciated, but none is also understandable.
+
+*******************
+	Bugs
+*******************
+
+If you delete a user, it may or may not crash the program here and there. I'm too lazy to check and fix it, and I have a final tomorrow. So I'll just leave it at that
+
+
+
+
+Finally, thank you for an awesome semester of CS104. I don't know who will be grading my homework, but thank you for making this semester awesome. Thank you and enjoy the winter!

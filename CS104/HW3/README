@@ -1,0 +1,30 @@
+README for Homework 3!
+
+Classes <LListSet> and <LListElement> are both template classes
+They are from homework 2 and from the class examples so they are standard
+
+Question 3 corresponds to class wallPost
+Question 4 corresponds to class wall
+Question 5 corresponds to class user
+Question 5 corresponds to class userList
+
+The data text file <user_info_file.txt> is the file that holds the user's information and their posts. It has its own specific format so please avoid using other files. The filename is hardcoded in so also avoid changing the file name
+
+In HW3.cpp:
+
+feel free to create a new account and play around
+
+If you login with the folloing information:
+
+First Name: 	admin
+Last Name: 		admin
+Password: 		admin
+
+You will access the admin menu. There you can view all the users and delete any user you want.
+
+There is an easter egg in the program. Feel free to find it. However if you look at the cpp file it will give it away and it will be no more fun
+
+Makefile:
+
+simply type <make> to compile all the files
+type <make clean> to remove the executible files

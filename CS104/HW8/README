@@ -1,0 +1,82 @@
+************************
+README for Homework 8!
+************************
+
+class doubleArraySize is the class that doubles its size when need be
+class LListSet is a doubly linked list bag
+
+The data text file <user_info_file.txt> is the file that holds the user's information and their posts. It has its own specific format so please avoid using other files. The filename is hardcoded in so also avoid changing the file name
+
+************************
+GENERATING DATABSE FILES
+************************
+
+run generate.cpp to customize the database. Generate.cpp will create a text file called "user_info_file_generate.txt".
+	Rename this file as "user_info_file.txt" before running sherbook to ensure that the right database file is used.
+
+	Do not generate a database with ridiculous proportions. Keep the max number of any field as 15000
+
+	If you generated a database file, there should be a user with the following information:
+
+	First Name:		Sophia
+	Last Name:		Isabella
+	Password:		Character
+
+	Feel free to use this information to login to an existing user
+
+	If you want to login as an other user, you can create a new account
+
+	To avoid the seg faults when running the generate program, make sure that you have a large number of users and a smaller number of wallposts and comments. The number of uses should be at least more than (number of wallposts x numer of comments)
+
+If you do generate a database file with 10000 users, it will take a while for the program to initialize all the data. Please give it some time to do so when you run it.
+
+For a database that will work, please generate the following
+
+10000 users
+3 wallposts
+1 comments
+100 friends
+0 requests
+
+This has been used and confirmed that it works
+
+If you want a smaller file to test with, use "database_10.txt". This database has 10 users
+A premade data file with 10000 users has been made. It's called "database_10000.txt"
+Make sure to rename the database files you want to use as "user_info_file.txt"
+
+************************
+      Sherbook.cpp
+************************
+
+The default database file "user_info_file.txt" is with the 100 users (if you didn't change it)
+
+feel free to create a new account and play around
+
+If you login with the folloing information:
+
+First Name: 	admin
+Last Name: 		admin
+Password: 		admin
+
+You will access the admin menu. There you can view all the users and delete any user you want.
+
+If you delete a user, then the user will be removed from all the other users's network and pending requests.
+Delete at risk
+
+Friends will only be added to your network if and only if one person sends a request, and that person accepts the request or sends a request to the corresponding person:
+
+	Case 1:
+	A sends request to B, B accepts
+	A sends request to B, B sends request to A
+
+There is an easter egg in the program. Feel free to find it. However if you look at the cpp file it will give it away and it will be no more fun
+
+WARNING: Please read each input prompt clearly. If it tells you to input a number and you input a character or a string, it will crash the program
+			I would fix this bug, but I had to go to the hopsital yesterday, so I didn't get around to it.
+
+************************
+Makefile:
+************************
+
+simply type <make> to compile all the files including generate.cpp
+type <make clean> to remove the executible files

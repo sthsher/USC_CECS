@@ -1,0 +1,41 @@
+CS 104 Homework 4 README
+
+----------------
+    Makefile
+----------------
+use the makefile in this directory
+
+To make question 2:
+	< make question2 >
+To make question 3:
+	< make question3 >
+
+or use the command
+	< make all >
+to compile both files
+
+To remove executibles:
+	< make clean >
+
+DO NOT USE MAKEFILE WITHIN THE SUBDIRECTORIES. THE PATH FILES WILL BE DIFFERENT AND THE PROGRAM WILL NOT RUN
+	Just make and run executibles from this directory
+
+----------------
+   Question 2
+----------------
+Feel free to run the program. It will take a while to finish.
+The results and graph are in the file:
+
+< Question 2 Answer Document.pdf >
+
+In the classes, if you see lines containing "this->pureSize" or "this->pureNumberOfElements", they have been commented out since they were used for debugging purposes
+
+----------------
+   Question 3
+----------------
+The input file follows the format as suggested in the assignment document.
+Simply run the program to see the result of the recursion. It will output who to invite and the final fun-factor number.
+The linked list class is a modified linked list with functions that are designed specifically for this assignment. They are:
+
+dataType* convertToArray:			converts the linked list into an array to keep track of the list of people to invite
+int returnSize:						returns the size of the linked list. Also needed to keep track of the number of people to invite

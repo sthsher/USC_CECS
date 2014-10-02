@@ -1,0 +1,37 @@
+<<<NEWUSER>>>
+Stephen Sher 18 ssher18 3 3 
+Stephen Sher 
+This is my firsts post
+Stephen Sher
+This is my second post
+Stephen Sher
+Hello!
+<<<NEWUSER>>>
+Riowena Seah 18 hi 1 1 
+Riowena Seah
+This is another post
+<<<NEWUSER>>>
+Jonathan Lee 20 jlee20 1 2 
+Jonathan Lee
+This is Jonathan's first post
+<<<NEWUSER>>>
+Nate Ngan 19 nngan19 1 2 
+Nate Ngan
+Nate's first post
+<<<END>>>
+Riowena Seah Jonathan Lee Nate Ngan 
+<<<MARKER>>>
+Stephen Sher 
+<<<MARKER>>>
+Stephen Sher Nate Ngan 
+<<<MARKER>>>
+Stephen Sher Jonathan Lee 
+<<<MARKER>>>
+NONE
+<<<MARKER>>>
+Jonathan Lee 
+<<<MARKER>>>
+Riowena Seah 
+<<<MARKER>>>
+Riowena Seah 
+<<<END>>>

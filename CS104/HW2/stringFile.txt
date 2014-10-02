@@ -1,0 +1,10 @@
+Hello
+this
+is
+the
+test
+file
+for
+CS104
+homework 2
+question 6

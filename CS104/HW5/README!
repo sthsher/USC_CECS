@@ -1,0 +1,21 @@
+HOMEWORK 5 README
+
+************
+ Makefile:
+************
+There is only one code to compile, so simply type:
+
+	<make>
+
+to make the code. To clean, simply type:
+
+	<make clean>
+
+and it will be clean!
+
+************
+ calculator
+************
+The calculator works fine for scalar inputs (eg typing 5 instead of [5])
+Read the instructions in the code (run the code and you will have the option to read the instructions) to know the formatting
+

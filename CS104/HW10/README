@@ -1,0 +1,75 @@
+Homework 10 README
+
+****************
+   Makefile
+****************
+Type make to make all the files. Makefile will make the following:
+
+	Q3.cpp
+	Q4.cpp
+	Q5.cpp
+	Q6.cpp
+
+Each program will run. After making.
+
+The input files are as follows:
+
+	Q4_input.txt
+	Q5_input.txt
+	Q6_ipnut.txt
+
+Feel free to change the input files as you want as long as it follows the input file format
+
+******************
+	Question 3
+******************
+
+The program will say student ID, however you can enter names too. As long as the name does not contain any spaces.
+At the menu, enter 'p' anytime to print the hash table. Use it to check where the students are being stored. This is for debugging / grading purposes only
+
+******************
+	Question 4
+******************
+
+The approach to this problem is as follows:
+
+	The keys of the hash function holds the name of the food
+	The value of the hash funciton holds the frequency of the food
+
+	The add function of the hash table has been modified such that when the key to add already exists in the function, rather than throwing an exception, the function will increment the value (frequency), thus counting the frequency of each food item
+
+	The hashtable also has been modified to have an extra field called highestFrequency. This int field will hold the highest frequency value.
+	The hashtable also has a few function called printHighestFrequency. It will traverse through every item of the hashtable, upon finding an item that has the same frequency as the highest frequency, it will print the item.
+
+******************
+	Question 5
+******************
+
+The approach to this problem is as follows:
+
+	The turkey calorie values are stored in the following fashion:
+
+		The index funciton of the hash table will take in the target calorie parameter, and store the turkey calorie value in the index that is the difference between the target and the turkey calorie value. Meaning the index of the hashtable represents the calorie amount needed to reach the target.
+
+			eg. Target of 10, turkey has value of 3, this will be stored in index 7
+
+	When traversing through the side dishes, the get funciton is used. If there is a turkey has a corresponding calorie value that completes the target, it will be stored in the index of side dish's calorie value. If there isn't, an exception will be thrown, but the exception message will not be shown in order to continue
+
+	All the possible combinations will be displayed in order to offer the friend all the possible combinations of turkey and side dish so they can pick what they want
+
+******************
+	Question 6
+******************
+
+The approach to this problem is as follows:
+
+	The key stores the word, the value stores the line that the word is contained in.
+
+	The program will read through all the lines, and store all the words into the hashtable with its line number. Therefore, if the word "family" is stored at index 5, in index 5 there will be many instances of the word "family" but all with different values (different lines)
+
+	The add function will also check for repeat words in the same line. This way the same word on the same line will not be stored mutiple times
+
+	Upon getting the query, the program will go to the index and compare each key with the query. If it matches, it will display the line number. This check is necessary because multiple words may be stored in the same index (for example, dog and god will have the same hash value, thus stored in the same index)
+
+
+	

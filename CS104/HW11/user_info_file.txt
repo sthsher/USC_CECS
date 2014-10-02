@@ -1,0 +1,151 @@
+sIsabella Sophia Isabella 11/10/1954 76a40e4f974fd895a0a2598c1cee28b4 2 5 0 
+Generic Question One
+Generic Answer One
+eOlivia Emma Olivia 5/16/1970 f2ce11ebf110993621bedd8e747d7b1b 2 6 1 
+Generic Question Two
+Generic Answer Two
+aEmily Ava Emily 6/13/1978 5da618e8e4b89c66fe86e32cdafde142 2 4 3 
+Generic Question Three
+Generic Answer Three
+aMadison Abigail Madison 9/16/1967 82b4ef4154f1823e73cf6191e307196c, 2 5 1 
+Generic Question Four
+Generic Answer Four
+mChloe Mia Chloe 5/11/1980 8fc42c6ddf9966db3b09e84365034357 2 4 1 
+Generic Question Five
+Generic Answer Five
+eElla Elizabeth Ella 3/21/1929 aa2d6e4f578eb0cfaba23beef76c2194 2 5 1 
+Generic Question Six
+Generic Answer Six
+aNatalie Addison Natalie 6/7/1968 f2340a1d30f79f3b1c1d78ca4fadbd26 2 6 0 
+Generic Question Seven
+Generic Answer Seven
+lGrace Lily Grace 10/15/1996 101f693f72287a2819a364f64ca1c0ed 2 2 2 
+Generic Question Eight
+Generic Answer Eight
+aSamantha Samantha Avery 9/20/1993 e0893a6c66e0961abed21bceaea8bf53 2 1 2 
+Generic Question Nine
+Generic Answer Nine
+sAubrey Sofia Aubrey 10/31/1989 37707887c2851a715319ff647df474ea 2 2 1 
+Generic Question Ten
+Generic Answer Ten
+asdf asdf asdf asdf 912ec803b2ce49e4a541068d495ab570 1 0 0 
+
+
+<<<END>>>
+sIsabella
+1 1 1384200000
+search Part of a series
+2 1384200500
+on Marxism Theoretical works [show]
+6 1 1384201000
+Concepts [show] Economics [show] Sociology
+7 1384201500
+[show] History [show] Philosophy [show]
+eOlivia
+7 1 1384202000
+Variants [show] Movements [show] People
+4 1384202500
+[show] Socialism portal Communism portal
+6 1 1384203000
+Philosophy portal v t e
+8 1384203500
+A character mask (German: Charaktermaske)
+aEmily
+7 1 1384204000
+in the Marxian sense is
+2 1384204500
+a character disguised with a
+1 1 1384205000
+different character. The term was
+5 1384205500
+used by Karl Marx in
+aMadison
+2 1 1384206000
+various published writings from the
+7 1384206500
+1840s to the 1860s, and
+4 1 1384207000
+also by Friedrich Engels. It
+3 1384207500
+is related to the classical
+mChloe
+5 1 1384208000
+Greek concepts of mimesis (imitative
+6 1384208500
+representation using analogies) and prosopopoeia
+1 1 1384209000
+(impersonation or personification) as well
+5 1384209500
+as the Roman concept of
+eElla
+5 1 1384210000
+persona,[1] but also differs from
+8 1384210500
+them (see below).[2] The notion
+2 1 1384211000
+of character masks has been
+7 1384211500
+used by neo-Marxist and non-Marxist
+aNatalie
+4 1 1384212000
+sociologists,[3] philosophers[4] and anthropologists[5] to
+6 1384212500
+interpret how people relate in
+2 1 1384213000
+societies with a complex division
+1 1384213500
+of labour, where people depend
+lGrace
+1 1 1384214000
+on trade to meet many
+4 1384214500
+of their needs. As a
+4 1 1384215000
+critical concept, bearing character masks
+1 1384215500
+contrasts with the concept of
+aSamantha
+4 1 1384216000
+"role-taking" developed by social theorists
+2 1384216500
+such as George Herbert Mead,
+7 1 1384217000
+Ralph Linton, Talcott Parsons, Theodore
+5 1384217500
+R. Sarbin and Ralf Dahrendorf,
+sAubrey
+8 1 1384218000
+as well as Robert K.
+6 1384218500
+Merton's idea of a role
+3 1 1384219000
+set, in the first instance
+5 1384219500
+because "social roles" do not
+asdf
+4 1 1396663332
+My first post!
+4 1396663344
+First comment
+sIsabella 1 4 5 6 8 
+eOlivia 0 2 3 5 6 7 
+aEmily 1 3 4 6 
+aMadison 1 2 6 7 9 
+mChloe 0 2 5 6 
+eElla 0 1 4 6 9 
+aNatalie 0 1 2 3 4 5 
+lGrace 0 3 
+aSamantha 0 
+sAubrey 3 5 
+asdf NONE
+sIsabella NONE
+eOlivia 4 
+aEmily 0 7 8 
+aMadison 8 
+mChloe 7 
+eElla 2 
+aNatalie NONE
+lGrace 5 4 
+aSamantha 1 4 
+sAubrey 4 
+asdf NONE
