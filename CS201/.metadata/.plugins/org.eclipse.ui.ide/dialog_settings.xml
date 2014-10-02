@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="ExternalProjectImportWizard">
+		<item value="false" key="WizardProjectsImportPage.STORE_NESTED_PROJECTS"/>
+		<item value="false" key="WizardProjectsImportPage.STORE_COPY_PROJECT_ID"/>
+		<item value="false" key="WizardProjectsImportPage.STORE_ARCHIVE_SELECTED"/>
+		<list key="WizardProjectsImportPage.STORE_DIRECTORIES">
+			<item value="/Users/StephenTHSher/Documents/Stephen/Work/School_Work/College/USC_CECS/CS201"/>
+			<item value="/Users/StephenTHSher/Documents/Stephen/Work/School_Work/College/USC_CECS/CS201/GenericSorting"/>
+			<item value="/Users/StephenTHSher/Documents/Stephen/Work/School_Work/College/USC_CECS/CS201/CSCI201_Labs"/>
+			<item value="/Users/StephenTHSher/Documents/Stephen/Work/School_Work/College/USC_CECS/CS201/CSCI201_In_Class_Code"/>
+		</list>
+		<list key="WizardProjectsImportPage.STORE_ARCHIVES">
+			<item value=""/>
+		</list>
+	</section>
+	<section name="ChooseWorkspaceDialogSettings">
+		<item value="425" key="DIALOG_X_ORIGIN"/>
+		<item value="275" key="DIALOG_Y_ORIGIN"/>
+	</section>
+</section>
