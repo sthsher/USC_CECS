@@ -77,10 +77,8 @@ public class CalendarApp extends JFrame{
 	static int selectedYear 				= calendar.get(Calendar.YEAR);
 	static int selectedMonth				= calendar.get(Calendar.MONTH);
 	static int selectedDate					= calendar.get(Calendar.DAY_OF_MONTH);
-
 	
 	static int chosenDatePosition;
-	//Test
 	
 	static int tempNum = 0;
 	
@@ -89,10 +87,6 @@ public class CalendarApp extends JFrame{
 	static final float blueS 		= (float) 0.8796296;
 	static final float blueB 		= (float) 0.84705883;
 
-	static final float lightBlueH 	= (float) 0.0947368;
-	static final float lightBlueS 	= (float) 0.3796296;
-	static final float lightBlueB 	= (float) 0.34705883;	
-	
 	public CalendarApp(){
 		super("CS201_Calendar");
 		
@@ -295,12 +289,6 @@ public class CalendarApp extends JFrame{
 		timeWarningPanel.	setBackground(Color.WHITE);
 		buttonWarningPanel.	setBackground(Color.WHITE);
 		eventButtonsPanel.	setBackground(Color.WHITE);
-		
-		// titlePanel.		setBackground(Color.getHSBColor(lightBlueH, lightBlueS, lightBlueB));
-		// locationPanel.	setBackground(Color.getHSBColor(lightBlueH, lightBlueS, lightBlueB));
-		// datePanel.		setBackground(Color.getHSBColor(lightBlueH, lightBlueS, lightBlueB));
-		// startTimePanel.	setBackground(Color.getHSBColor(lightBlueH, lightBlueS, lightBlueB));
-		// endTimePanel.	setBackground(Color.getHSBColor(lightBlueH, lightBlueS, lightBlueB));
 
 		//Setup Labels
 		eventChoiceLabel.	setPreferredSize(new Dimension(420, 20));
@@ -450,7 +438,7 @@ public class CalendarApp extends JFrame{
 		//-----------------------------------------------------------------
 		aboutPanel.			setPreferredSize(new Dimension(500,500));
 		picturePanel.		setPreferredSize(new Dimension(300,375));
-		namePanel.			setPreferredSize(new Dimension(500,60));
+		namePanel.			setPreferredSize(new Dimension(500,30));
 		infoPanel.			setPreferredSize(new Dimension(300,65));
 		
 		aboutPanel.			setBorder(null);
@@ -476,10 +464,6 @@ public class CalendarApp extends JFrame{
 		infoLabelA.			setFont(new Font("Helvetica", Font.PLAIN, 12));
 		infoLabelB.			setFont(new Font("Helvetica", Font.PLAIN, 12));
 		infoLabelC.			setFont(new Font("Helvetica", Font.PLAIN, 12));
-		// infoLabelA.			setPreferredSize(new Dimension(450,15));
-		// infoLabelB.			setPreferredSize(new Dimension(450,15));
-		// infoLabelC.			setPreferredSize(new Dimension(450,15));
-
 
 		namePanel.			add(nameLabel);
 		infoPanel.			add(infoLabelA);
@@ -528,7 +512,6 @@ public class CalendarApp extends JFrame{
 		//add outerPanel
 		add(outerPanel);
 		
-		
 		setVisible(true);		
 	}
 	
@@ -538,7 +521,9 @@ public class CalendarApp extends JFrame{
 	}
 	
 	
-	//Helpers
+	//-----------------------------------------------------------------
+	//							Helpers
+	//-----------------------------------------------------------------
 	private static int convertTime(int hour, int minute, String AMPM){
 		int time = hour;
 		if (AMPM.equals("PM")){
@@ -576,7 +561,7 @@ public class CalendarApp extends JFrame{
 		}
 				
 		boolean isLeap		= false;
-		
+
 		//first determine if leap year
 		if (year % 4 == 0){
 			if (year % 100 == 0){
@@ -607,7 +592,7 @@ public class CalendarApp extends JFrame{
 		
 	}
 	
-	public static ArrayList<Event> getEventArray(){
+	private static ArrayList<Event> getEventArray(){
 		ArrayList<Event> returnList = new ArrayList<Event>();
 		for (int i = 0; i < eventArray.size(); ++i){
 			if (eventArray.get(i).getYear() == selectedYear && eventArray.get(i).getMonth() == selectedMonth && eventArray.get(i).getDate() == selectedDate){
@@ -623,12 +608,11 @@ public class CalendarApp extends JFrame{
 		}
 	}
 	
-	public static void createEventsPanel(){
+	private static void createEventsPanel(){
 		eventsPanel = new JPanel();
 		eventsPanel.setBorder(null);
 		eventsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
 		eventsPanel.setBackground(Color.WHITE);
-
 		
 		if (chosenDatePosition == -1){
 			eventsPanel.setPreferredSize(new Dimension(400,220));
@@ -640,7 +624,6 @@ public class CalendarApp extends JFrame{
 		else{
 			//Add the events
 			//See if there's events on this day
-
 			ArrayList<Event> displayEvents = getEventArray();
 			if (displayEvents != null){
 				eventsPanel.setPreferredSize(new Dimension(400,30*displayEvents.size()));
@@ -664,7 +647,7 @@ public class CalendarApp extends JFrame{
 		eventsScroller.setViewportView(eventsPanel);
 	}
 
-	public static void createMonthPanel(){
+	private static void createMonthPanel(){
 		//PanelSetup
 		monthPanel 		= new JPanel();
 		
@@ -709,13 +692,6 @@ public class CalendarApp extends JFrame{
 				bt.year 	= currentYear;
 				bt.month 	= currentMonth;
 				bt.date 	= currentDate;
-				
-				//-----TEST add an event//-----//-----//-----//-----//-----
-//				Event newEvent = new Event(currentYear, currentMonth, currentDate, 1, 1, "AM", 2, 2, "AM", ("Test Title" + i + " " + i), "Location");
-//				eventArray.add(newEvent);
-//				bt.numOfEvents++;
-				//-----//-----//-----//-----//-----//-----//-----//-----//-----//-----
-				
 			}
 			else{
 				bt = new DateButton(("" + nextMonthCounter++));
@@ -725,21 +701,8 @@ public class CalendarApp extends JFrame{
 
 			}
 			bt.setHorizontalTextPosition(SwingConstants.CENTER);
-
-//			//try image
-//			try{
-//				ImageIcon ii;
-//				BufferedImage bi = ImageIO.read(new File("white_event.jpg"));
-//				Image scaled = bi.getScaledInstance(60,60, Image.SCALE_SMOOTH);
-//				ii = new ImageIcon(scaled);
-//				bt.setIcon(ii);
-//
-//			} catch (IOException IOE){
-//				System.out.println(IOE.getMessage());
-//			}
 			bt.setBackground(Color.WHITE);
 			bt.setOpaque(true);
-			
 			
 			//if current date
 			if (dateCounter-1 == currentDate){
@@ -750,9 +713,7 @@ public class CalendarApp extends JFrame{
 				if (dateCounter-1 == daysInMonth[currentMonth] && currentDate == daysInMonth[currentMonth]){
 					dateCounter = -1;		//get rid of dateCounter if last day of the month
 				}
-				
 			}
-			
 			//Formatting for each panel
 			bt.setFont(new Font("Helvetica", Font.BOLD, 24));
 			bt.setBorder(new LineBorder(Color.WHITE));
@@ -765,9 +726,6 @@ public class CalendarApp extends JFrame{
 			dateButtonArray.add(bt);
 			monthPanel.add(bt);
 		}
-
-		
-		
 	}
 	
 	private static void colorButton(DateButton bt, String color){
@@ -836,15 +794,16 @@ public class CalendarApp extends JFrame{
 		int nextMonthCounter = 1;
 		int prevMonthCounter = prevNumOfDays-startingDate+1;
 		
+		
 		for (int i = 0; i < 42; ++i){
-			//reset icons and event boolean
-			dateButtonArray.get(i).setIcon(null);
+			//reset boolean
 			dateButtonArray.get(i).hasEvent = false;
-			
+
 			if (i < startingDate){
 				dateButtonArray.get(i).setText("" + prevMonthCounter++);
 				dateButtonArray.get(i).inMonth = false;
 				dateButtonArray.get(i).setForeground(Color.GRAY);
+				dateButtonArray.get(i).setBackground(Color.WHITE);
 			}
 			else if(i <= (numOfDays + startingDate-1)){
 				dateButtonArray.get(i).setText("" + dateCounter);
@@ -861,6 +820,7 @@ public class CalendarApp extends JFrame{
 						eventArray.get(j).getMonth() 	== dateButtonArray.get(i).month &&
 						eventArray.get(j).getDate()		== dateButtonArray.get(i).date){
 						dateButtonArray.get(i).hasEvent = true;
+						break;
 					}
 				}
 			}
@@ -868,47 +828,45 @@ public class CalendarApp extends JFrame{
 				dateButtonArray.get(i).setText("" + nextMonthCounter++);
 				dateButtonArray.get(i).inMonth = false;
 				dateButtonArray.get(i).setForeground(Color.GRAY);
+				dateButtonArray.get(i).setBackground(Color.WHITE);
 			}
 			
+			//reset icons and event boolean and colors
+			dateButtonArray.get(i).setIcon(null);
+			colorButton(dateButtonArray.get(i), "WHITE");
+			
 			//Color panels
-			//priority: current Date
+			//color gray automatically if coming out of eventmanager (-2)
+			if (dateCounter-1 == selectedDate && month == selectedMonth && year == selectedYear && chosenDatePosition == -2){
+				chosenDatePosition = i;
+				System.out.println("Marker");
+				colorButton(dateButtonArray.get(i), "GRAY");
+			}
+			//always color the current date
 			if (dateCounter-1 == currentDate && month == currentMonth && year == currentYear){
 				if (chosenDatePosition == -2 && selectedDate == currentDate){
 					//if coming out of event manager
 					chosenDatePosition = i;
 				}
-//				dateButtonArray.get(i).setForeground(Color.WHITE);
-//				dateButtonArray.get(i).setBackground(Color.getHSBColor(blueH, blueS, blueB));
-//				dateButtonArray.get(i).setOpaque(true);
 				colorButton(dateButtonArray.get(i), "BLUE");
 			}
-			//other wise the selected date
-			else if (dateCounter-1 == selectedDate && month == selectedMonth && year == selectedYear && chosenDatePosition == -2){
-				chosenDatePosition = i;
-//				dateButtonArray.get(i).setForeground(Color.WHITE);
-//				dateButtonArray.get(i).setBackground(Color.GRAY);
-//				dateButtonArray.get(i).setOpaque(true);
-				colorButton(dateButtonArray.get(i), "GRAY");
-			}
-			else{
-				colorButton(dateButtonArray.get(i), "WHITE");
-			}
-
 		}
 		
+		//if not changing months, set selected date
 		if (chosenDatePosition != -1){
 			selectedDate = dateButtonArray.get(chosenDatePosition).date;
 		}
 		else{
+			//if changing months, selected date is 0
 			selectedDate = 0;
 		}
-		
 		//Display the events
 		createEventsPanel();
-
 	}
 	
-	//Actions
+	//-----------------------------------------------------------------
+	//							Actions
+	//-----------------------------------------------------------------
 	static class PrevButtonAction implements ActionListener{
 		public void actionPerformed(ActionEvent ae){
 			if (selectedMonth == 0){
@@ -918,8 +876,8 @@ public class CalendarApp extends JFrame{
 			else{
 				--selectedMonth;
 			}
-			
-			chosenDatePosition = -1;
+			selectedDate		= 0;
+			chosenDatePosition 	= -1;
 			refreshMonthPanel(selectedMonth, selectedYear);
 		}
 	}
@@ -934,7 +892,8 @@ public class CalendarApp extends JFrame{
 				++selectedMonth;
 			}
 			
-			chosenDatePosition = -1;
+			selectedDate		= 0;
+			chosenDatePosition 	= -1;
 			refreshMonthPanel(selectedMonth, selectedYear);
 		}
 	}
@@ -943,7 +902,6 @@ public class CalendarApp extends JFrame{
 		public void actionPerformed(ActionEvent ae){
 			
 			//if it's a new event or if there's only new event, do nothing
-			System.out.println("index: " + eventBox.getSelectedIndex());
 			if (eventBox.getSelectedIndex() <= 0){
 				return;
 			}
@@ -988,7 +946,6 @@ public class CalendarApp extends JFrame{
 			locationTextField.	setText("");
 			
 			//clear array
-			System.out.println("Size: " + eventsInDay.size());
 			eventsInDay.clear();
 			//Add in all the events in the day
 			for (int i = 0; i < eventArray.size(); ++i){
@@ -1005,8 +962,16 @@ public class CalendarApp extends JFrame{
 			//Initialize combo box values
 			yearBox.			setSelectedIndex(selectedYear-1990);
 			monthBox.			setSelectedIndex(selectedMonth);
-			dateBox.			setSelectedIndex(selectedDate-1);
-			
+			System.out.println("date: " + selectedDate);
+
+			if (selectedDate == 0){
+				System.out.println("MARKER");
+				dateBox.		setSelectedIndex(0);
+			}
+			else{
+				dateBox.			setSelectedIndex(selectedDate-1);
+			}
+				
 			if (calendar.get(Calendar.HOUR_OF_DAY) > 12 ){
 				//subtract 13 (extra 1 for index) and set to PM
 				startHourBox.	setSelectedIndex(calendar.get(Calendar.HOUR_OF_DAY)-13);
@@ -1091,15 +1056,10 @@ public class CalendarApp extends JFrame{
 				refreshMonthPanel(selectedMonth, selectedYear);
 				
 				//Change color of clicked one if not the current date
-				if (selectedDate != currentDate || selectedMonth != currentMonth & selectedYear != currentYear){
-//					dateButtonArray.get(position).setBackground(Color.GRAY);
-//					dateButtonArray.get(position).setOpaque(true);
-//					dateButtonArray.get(position).setForeground(Color.WHITE);
+				if (selectedDate != currentDate || selectedMonth != currentMonth || selectedYear != currentYear){
 					colorButton(dateButtonArray.get(position), "GRAY");
-					//dateButtonArray.get(position).setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 				}
 			}
-			
 		}
 	}
 	
@@ -1132,7 +1092,6 @@ public class CalendarApp extends JFrame{
 				//set hasEvent boolean
 				if (eventBox.getItemCount() == 1){
 					//no more events, except for new event
-					System.out.println("Marker");
 					System.out.println(dateButtonArray.get(chosenDatePosition).hasEvent);
 					dateButtonArray.get(chosenDatePosition).hasEvent = false;
 				}
@@ -1218,8 +1177,6 @@ public class CalendarApp extends JFrame{
 									(int)endHourBox.getSelectedItem(),		(int)endMinuteBox.getSelectedItem(),	(String)endAMPMBox.getSelectedItem(),
 									titleTextField.getText(), 				locationTextField.getText());
 			}
-			
-			
 			//Want to highlight month, set chosenDatePosition to -1
 			chosenDatePosition = -2;
 			refreshMonthPanel(selectedMonth, selectedYear);
@@ -1229,8 +1186,11 @@ public class CalendarApp extends JFrame{
 			cl.show(outerPanel, "cPanel");			
 		}
 	}
-	
 }
+
+//-----------------------------------------------------------------
+//							Classes
+//-----------------------------------------------------------------
 
 class DateButton extends JButton{
 	static final long serialVersionUID = 1;
@@ -1325,8 +1285,6 @@ class Event{
 		returnString		+= "\n";
 		
 		return returnString;
-		
 	}
-
 }
 
