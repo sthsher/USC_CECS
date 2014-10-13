@@ -1,21 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
+	<section name="org.eclipse.ui.texteditor.GotoLineAction$GotoLineDialog_dialogBounds">
+		<item value="604" key="DIALOG_X_ORIGIN"/>
+		<item value="401" key="DIALOG_Y_ORIGIN"/>
+	</section>
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
 		<item value="false" key="isRegEx"/>
-		<item value="EventManagerAction" key="selection"/>
+		<item value="System.out.println" key="selection"/>
 		<item value="false" key="casesensitive"/>
 		<item value="false" key="incremental"/>
 		<item value="true" key="wrap"/>
 		<item value="false" key="wholeword"/>
 		<list key="findhistory">
-			<item value="eventmanageraction"/>
-			<item value="eventmanager"/>
-			<item value="event"/>
+			<item value="System.out.println"/>
+			<item value="dateaction"/>
+			<item value="refreshMonthPanel"/>
+			<item value="refresh"/>
+			<item value="eventManagerTab"/>
 			<item value="saveaction"/>
-			<item value="System.out"/>
-			<item value="refreshmonth"/>
-			<item value="index:"/>
-			<item value="colorbutton"/>
+			<item value="eventmanagertab"/>
+			<item value="eventbutton"/>
 		</list>
 		<list key="replacehistory">
 		</list>

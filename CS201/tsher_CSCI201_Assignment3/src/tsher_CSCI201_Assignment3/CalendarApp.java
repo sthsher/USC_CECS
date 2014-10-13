@@ -796,8 +796,9 @@ public class CalendarApp extends JFrame{
 		
 		
 		for (int i = 0; i < 42; ++i){
-			//reset boolean
+			//reset boolean and click cound
 			dateButtonArray.get(i).hasEvent = false;
+			dateButtonArray.get(i).clickCount = 0;
 
 			if (i < startingDate){
 				dateButtonArray.get(i).setText("" + prevMonthCounter++);
@@ -839,7 +840,6 @@ public class CalendarApp extends JFrame{
 			//color gray automatically if coming out of eventmanager (-2)
 			if (dateCounter-1 == selectedDate && month == selectedMonth && year == selectedYear && chosenDatePosition == -2){
 				chosenDatePosition = i;
-				System.out.println("Marker");
 				colorButton(dateButtonArray.get(i), "GRAY");
 			}
 			//always color the current date
@@ -934,62 +934,65 @@ public class CalendarApp extends JFrame{
 		}
 	}
 	
+	//populate event manager
+	private static void populateEventManager(){
+		//clear all the warning labels and text fields
+		dateWarningLabel.	setText("");
+		timeWarningLabel.	setText("");
+		buttonWarningLabel.	setText("");
+		titleWarningLabel.	setText("");
+		locWarningLabel.	setText("");
+		titleTextField.		setText("");
+		locationTextField.	setText("");
+		
+		//clear array
+		eventsInDay.clear();
+		//Add in all the events in the day
+		for (int i = 0; i < eventArray.size(); ++i){
+			if (eventArray.get(i).getYear() == selectedYear && eventArray.get(i).getMonth() == selectedMonth && eventArray.get(i).getDate() == selectedDate){
+				eventsInDay.add(eventArray.get(i));
+			}
+		}
+		
+		//clear contents in box and re-add the contents in the box
+		eventChoices.		removeAllElements();
+		eventChoices.		addElement("New Event");
+		eventBox.			setSelectedIndex(0);
+		
+		//Initialize combo box values
+		yearBox.			setSelectedIndex(selectedYear-1990);
+		monthBox.			setSelectedIndex(selectedMonth);
+
+		if (selectedDate == 0){
+			dateBox.		setSelectedIndex(0);
+		}
+		else{
+			dateBox.			setSelectedIndex(selectedDate-1);
+		}
+			
+		if (calendar.get(Calendar.HOUR_OF_DAY) > 12 ){
+			//subtract 13 (extra 1 for index) and set to PM
+			startHourBox.	setSelectedIndex(calendar.get(Calendar.HOUR_OF_DAY)-13);
+			startAMPMBox.	setSelectedIndex(1);
+			endHourBox.		setSelectedIndex(calendar.get(Calendar.HOUR_OF_DAY)-13);
+			endAMPMBox.		setSelectedIndex(1);
+		}
+		else{
+			startHourBox.	setSelectedIndex(calendar.get(Calendar.HOUR_OF_DAY)-1);
+			endHourBox.		setSelectedIndex(calendar.get(Calendar.HOUR_OF_DAY)-1);
+		}
+		startMinuteBox.		setSelectedIndex(calendar.get(Calendar.MINUTE)/5);
+		endMinuteBox.		setSelectedIndex(calendar.get(Calendar.MINUTE)/5);
+		
+		//Get events into box
+		for (int i = 0; i < eventsInDay.size(); ++i){
+			eventChoices.addElement(eventsInDay.get(i).getTitle());
+		}
+	}
+	
 	static class EventManagerAction implements ActionListener{
 		public void actionPerformed(ActionEvent ae){
-			//clear all the warning labels and text fields
-			dateWarningLabel.	setText("");
-			timeWarningLabel.	setText("");
-			buttonWarningLabel.	setText("");
-			titleWarningLabel.	setText("");
-			locWarningLabel.	setText("");
-			titleTextField.		setText("");
-			locationTextField.	setText("");
-			
-			//clear array
-			eventsInDay.clear();
-			//Add in all the events in the day
-			for (int i = 0; i < eventArray.size(); ++i){
-				if (eventArray.get(i).getYear() == selectedYear && eventArray.get(i).getMonth() == selectedMonth && eventArray.get(i).getDate() == selectedDate){
-					eventsInDay.add(eventArray.get(i));
-				}
-			}
-			
-			//clear contents in box and re-add the contents in the box
-			eventChoices.		removeAllElements();
-			eventChoices.		addElement("New Event");
-			eventBox.			setSelectedIndex(0);
-			
-			//Initialize combo box values
-			yearBox.			setSelectedIndex(selectedYear-1990);
-			monthBox.			setSelectedIndex(selectedMonth);
-			System.out.println("date: " + selectedDate);
-
-			if (selectedDate == 0){
-				System.out.println("MARKER");
-				dateBox.		setSelectedIndex(0);
-			}
-			else{
-				dateBox.			setSelectedIndex(selectedDate-1);
-			}
-				
-			if (calendar.get(Calendar.HOUR_OF_DAY) > 12 ){
-				//subtract 13 (extra 1 for index) and set to PM
-				startHourBox.	setSelectedIndex(calendar.get(Calendar.HOUR_OF_DAY)-13);
-				startAMPMBox.	setSelectedIndex(1);
-				endHourBox.		setSelectedIndex(calendar.get(Calendar.HOUR_OF_DAY)-13);
-				endAMPMBox.		setSelectedIndex(1);
-			}
-			else{
-				startHourBox.	setSelectedIndex(calendar.get(Calendar.HOUR_OF_DAY)-1);
-				endHourBox.		setSelectedIndex(calendar.get(Calendar.HOUR_OF_DAY)-1);
-			}
-			startMinuteBox.		setSelectedIndex(calendar.get(Calendar.MINUTE)/5);
-			endMinuteBox.		setSelectedIndex(calendar.get(Calendar.MINUTE)/5);
-			
-			//Get events into box
-			for (int i = 0; i < eventsInDay.size(); ++i){
-				eventChoices.addElement(eventsInDay.get(i).getTitle());
-			}
+			populateEventManager();
 		}
 	}
 	
@@ -1036,9 +1039,6 @@ public class CalendarApp extends JFrame{
 			this.parent = parent;
 		}
 		public void actionPerformed(ActionEvent ae){
-			System.out.println("About");
-
-
 			JOptionPane.showMessageDialog(parent, aboutPanel, "About", JOptionPane.PLAIN_MESSAGE);
 		}
 	}
@@ -1052,6 +1052,13 @@ public class CalendarApp extends JFrame{
 			if (dateButtonArray.get(position).inMonth){
 				chosenDatePosition = position;
 	
+				//before refresh and all the clicks get resetted, check if it already has one click
+				if (dateButtonArray.get(position).clickCount == 1){
+					populateEventManager();
+					CardLayout cl   = (CardLayout)outerPanel.getLayout();
+					cl.show(outerPanel, "emPanel");
+				}
+				
 				//Reset all the colors			
 				refreshMonthPanel(selectedMonth, selectedYear);
 				
@@ -1059,6 +1066,9 @@ public class CalendarApp extends JFrame{
 				if (selectedDate != currentDate || selectedMonth != currentMonth || selectedYear != currentYear){
 					colorButton(dateButtonArray.get(position), "GRAY");
 				}
+				
+				++dateButtonArray.get(position).clickCount;
+				
 			}
 		}
 	}
@@ -1092,7 +1102,6 @@ public class CalendarApp extends JFrame{
 				//set hasEvent boolean
 				if (eventBox.getItemCount() == 1){
 					//no more events, except for new event
-					System.out.println(dateButtonArray.get(chosenDatePosition).hasEvent);
 					dateButtonArray.get(chosenDatePosition).hasEvent = false;
 				}
 				
@@ -1193,6 +1202,7 @@ public class CalendarApp extends JFrame{
 //-----------------------------------------------------------------
 
 class DateButton extends JButton{
+	public int clickCount = 0;
 	static final long serialVersionUID = 1;
 	public boolean inMonth;
 	public int position, year, month, date;
