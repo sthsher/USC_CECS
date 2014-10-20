@@ -1,6 +1,8 @@
 package test_GUI;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -11,28 +13,42 @@ import javax.swing.JTextField;
 public class Test_GUI extends JFrame{
 	public Test_GUI(){
 		super("CSCI 201 Window");
-		setSize(500,100);
+		setSize(600,400);
 		setLocation(200,300);
 
-		JPanel northPanel 		=	 new JPanel();
-		JLabel nameLabel 		=	 new JLabel("Name");
-		JTextField nameTF 		=	 new JTextField(25);
-		JButton verifyButton 	=	 new JButton("Verify");
+		JPanel phonePanel = new JPanel();
+		phonePanel.setLayout(new FlowLayout());
+		phonePanel.setPreferredSize(new Dimension(600,400));
+		
+		JPanel filler = new JPanel();
+		filler.setPreferredSize(new Dimension(600,100));
+		
+		phonePanel.add(filler);
+		
+		//Need a textField
+		JTextField 	phoneField 	= new JTextField();
+		phoneField.setPreferredSize(new Dimension(150,20));
+		
+		//Buttons
+		JPanel buttonPanel = new JPanel();
+		buttonPanel.setPreferredSize(new Dimension(150, 140));
+		buttonPanel.add(phoneField);
+		buttonPanel.setLayout(new FlowLayout());
+		
+		String[] array = {"7","8","9","4","5","6","1","2","3","*","0","+"};
 
-		northPanel.add(nameLabel);
-		northPanel.add(nameTF);
-		northPanel.add(verifyButton);
-		add(northPanel, BorderLayout.NORTH);
+		for (int i = 0; i < 12; ++i){
+			JButton newButton = new JButton(array[i]);
+			newButton.setPreferredSize(new Dimension(40,20));
+			buttonPanel.add(newButton);
+		}
 
-		JPanel southPanel 		= 	new JPanel();
-		JLabel emailLabel		=	new JLabel("Email");
-		JTextField emailTF		=	new JTextField(25);
-		JButton submitButton	=	new JButton("Submit");
 
-		southPanel.add(emailLabel);
-		southPanel.add(emailTF);
-		southPanel.add(submitButton);
-		add(southPanel, BorderLayout.SOUTH);
+		
+		phonePanel.add(buttonPanel, BorderLayout.CENTER);
+		
+		
+		add(phonePanel, BorderLayout.CENTER);
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setVisible(true);

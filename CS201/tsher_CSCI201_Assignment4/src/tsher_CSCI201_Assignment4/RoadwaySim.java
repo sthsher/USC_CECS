@@ -34,21 +34,13 @@ public class RoadwaySim extends JFrame {
 	JTable		dataTable;
 	JScrollPane	tableScroller;
 	
-	class Coor{
-		public Coor(){
-			x = 0;
-			y = 0;
-		}
-		public int x;
-		public int y;
-	}
+
 	
-	Object[]		columnNames	= {"Car#", "X", "Y"};
-	Object[][]		rowData		= {{"","",""}};
-	Tile[][]		tileData	= new Tile[9][9];
-	Coor[][]		tileLoc		= new Coor[9][9];
-	ArrayList<Car>	carArray	= new ArrayList<Car>();
-	boolean			isTile		= false;
+	Object[]			columnNames	= {"Car#", "X", "Y"};
+	Object[][]			rowData		= {{"","",""}};
+	GlobalData.Coor[][] tileLoc		= new GlobalData.Coor[9][9];
+	ArrayList<Car>		carArray	= new ArrayList<Car>();
+	boolean				isTile		= false;
 	
 	File		dataFile;
 	boolean		fileExist = true;
@@ -116,7 +108,7 @@ public class RoadwaySim extends JFrame {
 		add(tableScroller, BorderLayout.EAST);
 
 		//run the panel thread
-		Thread mapThread = new Thread(mapPanel);
+		MapThread mapThread = new MapThread(mapPanel);
 		mapThread.start();
 		
 		setVisible(true);
@@ -160,7 +152,7 @@ public class RoadwaySim extends JFrame {
 														Integer.parseInt(cElement.getAttribute("column")),
 														cElement.getAttribute("type"),
 														Integer.parseInt(cElement.getAttribute("degree")));
-							tileData[i][j] 	= newTile; 
+							GlobalData.tileData[j][i] 	= newTile; 
 						}
 					}
 					
@@ -184,8 +176,12 @@ public class RoadwaySim extends JFrame {
 										(int)(((Element)lList.item(0)).getAttribute("y").charAt(0))-64);
 				carArray.add(newCar);
 				
-				//strat the thread
-				newCar.start();
+				//start the thread
+				//debugging: start only first car
+				if (i == 0 || i == 1 || i == 2){
+					System.out.println("marker");
+					newCar.start();
+				}
 			}
 			
 //			for (int i = 0; i < 9; ++i){
@@ -205,21 +201,33 @@ public class RoadwaySim extends JFrame {
 		
 	}
 	
-	class MapPanel extends JPanel implements Runnable{
+	class MapThread extends Thread{
+		private MapPanel mp;
+		public MapThread(MapPanel mp){
+			this.mp = mp;
+		}
+		public void run(){
+			while (true){
+				mp.repaint();
+				try{
+					sleep((long)(20));
+				} catch (InterruptedException IE){
+					System.out.println("Error: Interrupted");
+					return;
+				}
+			}
+		}
+	}
+	
+	class MapPanel extends JPanel{
 		public MapPanel(){
 			super();
 		}
 		
-		public void run(){
-			while (true){
-				this.repaint();
-			}
-		}
-		
 		private void drawRoad(int i, int j, Graphics g){
 			g.setColor(Color.BLACK);
-			String type 	= tileData[i][j].getType();
-			int degree 		= tileData[i][j].getDegree();
+			String type 	= GlobalData.tileData[i][j].getType();
+			int degree 		= GlobalData.tileData[i][j].getDegree();
 			int x 			= tileLoc[i][j].x;
 			int y 			= tileLoc[i][j].y;
 			if (type.equals("blank")){
@@ -280,16 +288,16 @@ public class RoadwaySim extends JFrame {
 		}
 		
 		private void drawCar(Graphics g){
-			for (int i = 0; i < carArray.size(); ++i){
+			for (int i = 0; i < 3; ++i){
 				Car tempCar = carArray.get(i);
 				//only paint it if it is lighted
 				if (tempCar.isLighted()){
-					int x = tempCar.getX()-1;
-					int y = tempCar.getY()-1;
+					int x = tempCar.getX();
+					int y = tempCar.getY();
 					
 					//Set color
 					g.setColor(tempCar.getColor());
-					g.fillOval(tileLoc[y][x].x+10, tileLoc[y][x].y+10, 30, 30);
+					g.fillOval(tileLoc[x][y].x+10, tileLoc[x][y].y+10, 30, 30);
 				}
 			}
 			
@@ -320,7 +328,7 @@ public class RoadwaySim extends JFrame {
 				//Create coordinates
 				for (int i = 0; i < 9; ++i){
 					for (int j = 0; j < 9; ++j){
-						tileLoc[i][j] = new Coor();
+						tileLoc[i][j] = new GlobalData.Coor();
 					}
 				}
 				
@@ -329,10 +337,10 @@ public class RoadwaySim extends JFrame {
 					for (int j = 0; j < 9; ++j){
 						tileLoc[i][j].x = (int)xChange;
 						tileLoc[i][j].y = (int)yChange;
-						xChange += tileSize;
+						yChange += tileSize;
 					}
-					yChange += tileSize;
-					xChange = xStart;
+					xChange += tileSize;
+					yChange = xStart;
 				}
 				
 				//Paint the tiles and roads after the tile
@@ -377,107 +385,4 @@ public class RoadwaySim extends JFrame {
 
 		}
 	}
-	
-	//Objects
-//	class Tile{
-//		private int column;
-//		private int row;
-//		private String type;
-//		private int degree;
-//		
-//		public Tile(char r, int c, String t, int d){
-//			this.column = c;
-//			this.type	= t;
-//			this.degree = d;
-//			this.row	= ((int)r)-64;
-//		}
-//		public String getType(){
-//			return this.type;
-//		}
-//		public int getColumn(){
-//			return this.column;
-//		}
-//		public int getRow(){
-//			return this.row;
-//		}
-//		public int getDegree(){
-//			return this.degree;
-//		}
-//	}
-	
-//	class Car extends Thread{
-//		private String 	color;
-//		private int 	ai;
-//		private double	speed;
-//		private double	blinkSpeed;
-//		private int		x;
-//		private int		y;
-//		private boolean isLighted = true;
-//		public Car(String c, int a, double s, int x, int y){
-//			this.color = c;
-//			this.ai 	= a;
-//			this.speed 	= s;
-//			this.x		= x;
-//			this.y		= y;
-//			this.blinkSpeed = s*3;
-//		}
-//		
-//		public void run(){
-//			//blink speeds
-//			while (true){
-//				this.toggle();
-//				try{
-//					System.out.println("Speed: " + (long)(1000/this.blinkSpeed));
-//					sleep((long)(1000/this.blinkSpeed));
-//				} catch (InterruptedException IE){
-//					System.out.println("Error: Interrupted");
-//					return;
-//				}
-//			}
-//		}
-//		
-//		public void toggle(){
-//			if (this.isLighted == true){
-//				this.isLighted = false;
-//			} else{
-//				this.isLighted = true;
-//			}
-//		}
-//		
-//		public boolean isLighted(){
-//			return this.isLighted;
-//		}
-//		
-//		public Color getColor(){
-//			switch(color){
-//				case "white": 		return Color.WHITE;
-//				case "light_gray":	return Color.LIGHT_GRAY;
-//				case "gray":		return Color.GRAY;
-//				case "dark_gray":	return Color.DARK_GRAY;
-//				case "black":		return Color.BLACK;
-//				case "red":			return Color.RED;
-//				case "pink":		return Color.PINK;
-//				case "orange":		return Color.ORANGE;
-//				case "yellow":		return Color.YELLOW;
-//				case "green":		return Color.GREEN;
-//				case "magenta":		return Color.MAGENTA;
-//				case "cyan":		return Color.CYAN;
-//				case "blue":		return Color.BLUE;
-//				default:			return Color.WHITE;
-//			}
-//			
-//		}
-//		public int getAI(){
-//			return this.ai;
-//		}
-//		public double getSpeed(){
-//			return this.speed;
-//		}
-//		public int getX(){
-//			return this.x;
-//		}
-//		public int getY(){
-//			return this.y;
-//		}
-//	}
 }
