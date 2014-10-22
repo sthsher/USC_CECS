@@ -3,6 +3,7 @@ package tsher_CSCI201_Assignment4;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -17,6 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.DefaultTableModel;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -27,12 +29,13 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class RoadwaySim extends JFrame {
+	static final long serialVersionUID = 1;
 
-	JMenuBar 	menuBar 		= new JMenuBar();
-	JMenuItem	openItem		= new JMenuItem("Open File...");
-	MapPanel	mapPanel		= new MapPanel();
-	JTable		dataTable;
-	JScrollPane	tableScroller;
+	JMenuBar 			menuBar 		= new JMenuBar();
+	JMenuItem			openItem		= new JMenuItem("Open File...");
+	MapPanel			mapPanel		= new MapPanel();
+	JTable				dataTable;
+	JScrollPane			tableScroller;
 	
 
 	
@@ -56,13 +59,17 @@ public class RoadwaySim extends JFrame {
 		setSize(810,650);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBackground(Color.WHITE);
+		setMinimumSize(new Dimension(700,550));
 		
 		//Set up mapPanel
 		mapPanel.setPreferredSize(new Dimension(600,600));
 		mapPanel.setBackground(Color.WHITE);
 		
 		//Set up JTable and scroller
-		dataTable = new JTable(rowData, columnNames);
+		dataTable = new JTable(GlobalData.model);
+		GlobalData.model.addColumn("Car #");
+		GlobalData.model.addColumn("X");
+		GlobalData.model.addColumn("Y");
 		
 		tableScroller = new JScrollPane(dataTable);
 		tableScroller.setPreferredSize(new Dimension(200,600));
@@ -169,29 +176,21 @@ public class RoadwaySim extends JFrame {
 				//get location
 				NodeList lList = cElement.getElementsByTagName("location");
 
-				Car newCar = new Car(	cElement.getAttribute("color"),
+				Car newCar = new Car(	i,
+										cElement.getAttribute("color"),
 										Integer.parseInt(cElement.getAttribute("ai")),
 										Double.parseDouble(cElement.getAttribute("speed")),
 										Integer.parseInt(((Element)lList.item(0)).getAttribute("x")),
 										(int)(((Element)lList.item(0)).getAttribute("y").charAt(0))-64);
 				carArray.add(newCar);
 				
-				//start the thread
-				//debugging: start only first car
-				if (i == 0 || i == 1 || i == 2){
-					System.out.println("marker");
-					newCar.start();
-				}
+				newCar.start();
 			}
 			
-//			for (int i = 0; i < 9; ++i){
-//				for (int j = 0; j < 9; ++j){
-//					System.out.print(tileData[i][j].getType() + "  ");
-//				}
-//				System.out.println("");
-//			}
-			
-			
+			//Set up table
+			for (int i = 0; i < carArray.size(); ++i){
+				GlobalData.model.addRow(new Object[] {""+(i+1),carArray.get(i).getX()+1,(char)(carArray.get(i).getY()+1+64)});
+			}
 			
 		} catch (ParserConfigurationException PCE){
 			PCE.printStackTrace();
@@ -220,6 +219,8 @@ public class RoadwaySim extends JFrame {
 	}
 	
 	class MapPanel extends JPanel{
+		static final long serialVersionUID = 1;
+
 		public MapPanel(){
 			super();
 		}
@@ -288,7 +289,8 @@ public class RoadwaySim extends JFrame {
 		}
 		
 		private void drawCar(Graphics g){
-			for (int i = 0; i < 3; ++i){
+			for (int i = 0; i < carArray.size(); ++i){
+//			int i = 1;
 				Car tempCar = carArray.get(i);
 				//only paint it if it is lighted
 				if (tempCar.isLighted()){
@@ -298,6 +300,9 @@ public class RoadwaySim extends JFrame {
 					//Set color
 					g.setColor(tempCar.getColor());
 					g.fillOval(tileLoc[x][y].x+10, tileLoc[x][y].y+10, 30, 30);
+					g.setColor(Color.WHITE);
+					g.setFont(new Font("Helvetica", Font.BOLD, 24));
+					g.drawString(""+(i+1), tileLoc[x][y].x+18, tileLoc[x][y].y+33);
 				}
 			}
 			
@@ -340,7 +345,7 @@ public class RoadwaySim extends JFrame {
 						yChange += tileSize;
 					}
 					xChange += tileSize;
-					yChange = xStart;
+					yChange = yStart;
 				}
 				
 				//Paint the tiles and roads after the tile
@@ -371,6 +376,7 @@ public class RoadwaySim extends JFrame {
 			
 			//Also draw string
 			//Be above xStart and yStart
+			g.setFont(new Font("Helvetica", Font.PLAIN, 12));
 			String[] rowValues = {"A", "B", "C", "D", "E", "F", "G", "H", "I"};
 
 			xChange = xStart + 20;

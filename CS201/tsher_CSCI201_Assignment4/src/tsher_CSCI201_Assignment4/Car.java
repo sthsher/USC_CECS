@@ -3,6 +3,7 @@ package tsher_CSCI201_Assignment4;
 import java.awt.Color;
 
 class Car extends Thread{
+	private int		carNum;
 	private String 	color;
 	private int 	aiNum;
 	private double	speed;
@@ -14,7 +15,8 @@ class Car extends Thread{
 
 	private CarAI	ai;
 	
-	public Car(String c, int a, double s, int x, int y){
+	public Car(int num, String c, int a, double s, int x, int y){
+		this.carNum			= num;
 		this.color 			= c;
 		this.aiNum 			= a;
 		this.speed 			= s;
@@ -30,6 +32,8 @@ class Car extends Thread{
 			this.ai = new CarAI2(x, y);
 		} else if (this.aiNum == 3){
 			this.ai = new CarAI3();
+		} else{
+			this.ai = new CarAI4();
 		}
 	}
 	
@@ -44,6 +48,14 @@ class Car extends Thread{
 			--this.x;
 		} else{
 			System.out.println("Unexpected direction");
+		}
+		
+		//update information in JTable
+		//y change
+		if (direction % 2 == 0){
+			GlobalData.model.setValueAt((char)(this.getY()+65), this.getCarNum(), 2);
+		} else{
+			GlobalData.model.setValueAt(""+(this.getX()+1), this.getCarNum(), 1);
 		}
 	}
 	
@@ -104,6 +116,9 @@ class Car extends Thread{
 			default:			return Color.WHITE;
 		}
 		
+	}
+	public int getCarNum(){
+		return this.carNum;
 	}
 	public int getAI(){
 		return this.aiNum;

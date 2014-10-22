@@ -66,70 +66,62 @@ class CarAI2 extends CarAI{
 	public CarAI2(int x, int y){
 		wipeClean();
 		//Starting Tile
-		visitedTiles[x][y] = true;
+		this.visitedTiles[x][y] = true;
 	}
 
 	private void wipeClean(){
 		for (int i = 0; i < 9; ++i){
 			for (int j = 0; j < 9; ++j){
-				if (GlobalData.tileData[i][j].getType().equals("blank")){
+				if (GlobalData.tileData[i][j].getType().equalsIgnoreCase("blank")){
 					//blank, so make it true
-					visitedTiles[i][j] = true;
+					this.visitedTiles[i][j] = true;
 				} else{
-					visitedTiles[i][j] = false;
+					this.visitedTiles[i][j] = false;
 				}
 			}
 		}
 	}
 	
 	//Check if there are any other possible places to go
-	private boolean isStuck(int x, int y){
+	private boolean isStuck(int x, int y, Tile tile){
 
-		//left edge
+		boolean[] adjacent = new boolean[4];
+		
 		if (x == 0){
-			if (!visitedTiles[x+1][y] ||
-				!visitedTiles[x][y-1] ||
-				!visitedTiles[x][y+1]){
-				return false;
-			}
-		} else if (x == 8){
-			if (!visitedTiles[x-1][y] ||
-				!visitedTiles[x][y-1] ||
-				!visitedTiles[x][y+1]){
-				return false;
-			}
-		} else if (y == 0){
-			if (!visitedTiles[x-1][y] ||
-				!visitedTiles[x+1][y] ||
-				!visitedTiles[x][y+1]){
-				return false;
-			}
-		} else if (y == 8){
-			if (!visitedTiles[x-1][y] ||
-				!visitedTiles[x+1][y] ||
-				!visitedTiles[x][y-1]){
-				return false;
-			}
-		} else {
-			if (!visitedTiles[x-1][y] ||
-				!visitedTiles[x+1][y] ||
-				!visitedTiles[x][y-1] ||
-				!visitedTiles[x][y+1]){
+			adjacent[3] = true;
+		} else{
+			adjacent[3] = visitedTiles[x-1][y];
+		}
+		if (x == 8){
+			adjacent[1] = true;
+		} else{
+			adjacent[1] = visitedTiles[x+1][y];
+		}
+		if (y == 0){
+			adjacent[0] = true;
+		} else{
+			adjacent[0] = visitedTiles[x][y-1];
+		}
+		if (y == 8){
+			adjacent[2] = true;
+		} else{
+			adjacent[2] = visitedTiles[x][y+1];
+		}
+		
+		for(int i = 0; i < 4; ++i){
+			//if there is a path and if it hasn't been visited, return true
+			if (!adjacent[i] && tile.checkOpen(i)){
 				return false;
 			}
 		}
-	
-		System.out.println("Stuck");
 		
-		//nowhere to go
 		return true;
 	}
 	
 	public int getDirection(Tile tile){
 		//Check if stuck
-		if (isStuck(tile.getX(), tile.getY())){
+		if (isStuck(tile.getX(), tile.getY(), tile)){
 			//set everything false
-			System.out.println("Wiping");
 			wipeClean();
 		}
 		
@@ -145,6 +137,11 @@ class CarAI2 extends CarAI{
 		visitedTiles[nextX][nextY] = true;
 		
 		while(loop){
+			
+			if (isStuck(nextX, nextY, tile)){
+				wipeClean();
+			}
+			
 			if (randomNum == 0){
 				--nextY;
 			} else if (randomNum == 1){
@@ -154,6 +151,8 @@ class CarAI2 extends CarAI{
 			} else{
 				--nextX;
 			}
+			
+
 			
 			//if there is a direction open and if it hasn't been visited yet
 			if(tile.checkOpen(randomNum) && !visitedTiles[nextX][nextY]){
@@ -174,6 +173,7 @@ class CarAI2 extends CarAI{
 			randomNum = generate.nextInt(4);
 		}
 		
+		//Should never reach here
 		return 0;
 	}
 }
@@ -208,10 +208,6 @@ class CarAI3 extends CarAI{
 
 class CarAI4 extends CarAI{
 	private int[] directionValues = new int[4];
-//	private int north 	= 0;
-//	private int south 	= 0;
-//	private int east	= 0;
-//	private int west	= 0;
 	private int direction = -1;
 
 	public CarAI4(){
