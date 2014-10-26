@@ -10,7 +10,7 @@ class Car extends Thread{
 	private double	blinkSpeed;
 	private int		x;
 	private int		y;
-	private boolean isLighted = true;
+	private boolean isLit = true;
 	private int		lightCounter;
 
 	private CarAI	ai;
@@ -69,7 +69,7 @@ class Car extends Thread{
 				System.out.println("Error: Interrupted");
 				return;
 			}
-			if (this.lightCounter == 0 && this.isLighted == true){
+			if (this.lightCounter == 0 && this.isLit == true){
 				move(this.ai.getDirection(GlobalData.tileData[this.x][this.y]));
 			}
 		}
@@ -84,18 +84,18 @@ class Car extends Thread{
 	}
 	
 	private void toggle(){
-		if (this.isLighted == true){
-			this.isLighted = false;
+		if (this.isLit == true){
+			this.isLit = false;
 		} else{
-			this.isLighted = true;
+			this.isLit = true;
 			//back to true, increment counter
 			increment();
 		}
 		
 	}
 	
-	public boolean isLighted(){
-		return this.isLighted;
+	public boolean isLit(){
+		return this.isLit;
 	}
 	
 	public Color getColor(){

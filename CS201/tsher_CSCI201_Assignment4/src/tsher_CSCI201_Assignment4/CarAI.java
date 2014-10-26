@@ -11,7 +11,7 @@ class CarAI1 extends CarAI{
 	private int prevTileLoc;
 	
 	public CarAI1(){
-		direction = 3;
+		direction = 2;
 		prevTileLoc = -1;
 	}
 	private void increment(){
@@ -181,18 +181,60 @@ class CarAI2 extends CarAI{
 class CarAI3 extends CarAI{
 	Random generate 			= new Random();
 	private boolean isWest 		= false;
+	private int leftMost		= -1;
+	private int rightMost		= -1;
+	
+	public CarAI3(){
+		for (int i = 0; i < 9; ++i){
+			for (int j = 0; j < 9; ++j){
+				if (!GlobalData.tileData[i][j].getType().equalsIgnoreCase("blank")){
+					//not a blank tile, record leftmost and break;
+					System.out.println("LeftMost = " + i);
+					this.leftMost = i;
+					break;
+				}
+			}
+			if (leftMost != -1){
+				break;
+			}
+		}
+		
+		for (int i = 8; i >= 0; --i){
+			for (int j = 0; j < 9; ++j){
+				if (!GlobalData.tileData[i][j].getType().equalsIgnoreCase("blank")){
+					//Rightmost
+					System.out.println("RightMost = " + i);
+					this.rightMost = i;
+					break;
+				}
+			}
+			if (rightMost != -1){
+				break;
+			}
+		}
+	}
+	
 	public int getDirection(Tile tile){
 		//See if you can go in favored direction. If you can, go
-		if (isWest && tile.checkOpen(3)){
-			return 3;
-		} else{
-			isWest = false;
+		
+		if (isWest){
+			if (tile.checkOpen(3)){		//go left if can go left
+				return 3;
+			} else if (tile.getX() == leftMost){	//can't go left, see if leftMost, if leftMost, switch to right, and go right
+				isWest = false;
+//				return 1;
+			}
 		}
-		if (!isWest && tile.checkOpen(1)){
-			return 1;
-		} else{
-			isWest = true;
+		else{
+			if (tile.checkOpen(1)){		//can go right
+				return 1;
+			} else if (tile.getX() == rightMost){
+				isWest = true;
+//				return 3;
+			}
 		}
+		
+
 		while(true){
 			//go in random direction
 			int randomNum = generate.nextInt(4);

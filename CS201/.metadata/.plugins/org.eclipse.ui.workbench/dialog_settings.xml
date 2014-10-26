@@ -20,8 +20,8 @@
 			<item value="399"/>
 		</list>
 		<list key="bounds">
-			<item value="109"/>
-			<item value="44"/>
+			<item value="529"/>
+			<item value="45"/>
 			<item value="622"/>
 			<item value="448"/>
 		</list>
@@ -40,6 +40,7 @@
 		<item value="true" key="WizardZipFileResourceExportPage1.STORE_COMPRESS_CONTENTS_ID"/>
 		<item value="true" key="WizardZipFileResourceExportPage1.STORE_CREATE_STRUCTURE_ID"/>
 		<list key="WizardZipFileResourceExportPage1.STORE_DESTINATION_NAMES_ID">
+			<item value="/Users/StephenTHSher/Desktop/chat.zip;*.tar.gz;*.tar;*.tgz"/>
 			<item value="/Users/StephenTHSher/Desktop/tsher_CSCI201_Assignment3.zip;*.tar.gz;*.tar;*.zip;*.tar.gz;*.tar;*.tgz"/>
 		</list>
 	</section>

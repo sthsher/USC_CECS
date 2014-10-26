@@ -18,7 +18,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.table.DefaultTableModel;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -293,7 +292,7 @@ public class RoadwaySim extends JFrame {
 //			int i = 1;
 				Car tempCar = carArray.get(i);
 				//only paint it if it is lighted
-				if (tempCar.isLighted()){
+				if (tempCar.isLit()){
 					int x = tempCar.getX();
 					int y = tempCar.getY();
 					
