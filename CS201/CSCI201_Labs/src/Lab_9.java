@@ -39,8 +39,9 @@ public class Lab_9 {
 			
 		} catch (ClassNotFoundException CNFE){
 			System.out.println("Class not found");
+			CNFE.printStackTrace();
 		} catch (Exception e){
-			System.out.println("Exception");
+			e.printStackTrace();
 		}
 		
 

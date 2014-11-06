@@ -86,12 +86,10 @@ public class RoadwaySim extends JFrame {
 				//see if valid selection
 				if (userSelection == JFileChooser.APPROVE_OPTION){
 					dataFile = chooser.getSelectedFile();
-					System.out.println("DataFile is: " + dataFile.getName());
 				}
 				else if (userSelection == JFileChooser.CANCEL_OPTION){
 					return;
 				}
-
 				
 				//Once file is selected, get the grid information
 				readXML();

@@ -189,7 +189,6 @@ class CarAI3 extends CarAI{
 			for (int j = 0; j < 9; ++j){
 				if (!GlobalData.tileData[i][j].getType().equalsIgnoreCase("blank")){
 					//not a blank tile, record leftmost and break;
-					System.out.println("LeftMost = " + i);
 					this.leftMost = i;
 					break;
 				}
@@ -203,7 +202,6 @@ class CarAI3 extends CarAI{
 			for (int j = 0; j < 9; ++j){
 				if (!GlobalData.tileData[i][j].getType().equalsIgnoreCase("blank")){
 					//Rightmost
-					System.out.println("RightMost = " + i);
 					this.rightMost = i;
 					break;
 				}

@@ -5,6 +5,7 @@
 		<item value="false" key="WizardProjectsImportPage.STORE_COPY_PROJECT_ID"/>
 		<item value="false" key="WizardProjectsImportPage.STORE_ARCHIVE_SELECTED"/>
 		<list key="WizardProjectsImportPage.STORE_DIRECTORIES">
+			<item value="/Users/StephenTHSher/Downloads/lab10"/>
 			<item value="/Users/StephenTHSher/Documents/Stephen/Work/School_Work/College/USC_CECS/CS201"/>
 			<item value="/Users/StephenTHSher/Documents/Stephen/Work/School_Work/College/USC_CECS/CS201/GenericSorting"/>
 			<item value="/Users/StephenTHSher/Documents/Stephen/Work/School_Work/College/USC_CECS/CS201/CSCI201_Labs"/>
@@ -17,5 +18,12 @@
 	<section name="ChooseWorkspaceDialogSettings">
 		<item value="425" key="DIALOG_X_ORIGIN"/>
 		<item value="275" key="DIALOG_Y_ORIGIN"/>
+	</section>
+	<section name="SaveAsDialogSettings">
+		<item value="526" key="DIALOG_WIDTH"/>
+		<item value="1|.Helvetica Neue DeskInterface|11.0|0|COCOA|1|.HelveticaNeueDeskInterface-Regular" key="DIALOG_FONT_NAME"/>
+		<item value="529" key="DIALOG_HEIGHT"/>
+		<item value="457" key="DIALOG_X_ORIGIN"/>
+		<item value="22" key="DIALOG_Y_ORIGIN"/>
 	</section>
 </section>
