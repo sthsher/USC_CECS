@@ -1,0 +1,3 @@
+grant codeBase "file:/Users/StephenTHSher/Documents/Stephen/Work/School_Work/College/USC_CECS/CS201/RCP" {
+    permission java.security.AllPermission;
+};
