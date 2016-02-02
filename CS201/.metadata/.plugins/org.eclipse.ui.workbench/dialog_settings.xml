@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
+	<section name="WorkbenchPreferenceDialogSettings">
+		<item value="531" key="DIALOG_X_ORIGIN"/>
+		<item value="155" key="DIALOG_Y_ORIGIN"/>
+	</section>
 	<section name="org.eclipse.ui.internal.QuickAccess">
-		<item value="657" key="dialogHeight"/>
-		<item value="1050" key="dialogWidth"/>
+		<item value="563" key="dialogHeight"/>
+		<item value="900" key="dialogWidth"/>
 		<list key="textEntries">
 		</list>
 		<list key="orderedElements">
@@ -22,8 +26,8 @@
 			<item value="399"/>
 		</list>
 		<list key="bounds">
-			<item value="-1271"/>
-			<item value="-49"/>
+			<item value="457"/>
+			<item value="112"/>
 			<item value="622"/>
 			<item value="448"/>
 		</list>
@@ -42,6 +46,8 @@
 		<item value="true" key="WizardZipFileResourceExportPage1.STORE_COMPRESS_CONTENTS_ID"/>
 		<item value="true" key="WizardZipFileResourceExportPage1.STORE_CREATE_STRUCTURE_ID"/>
 		<list key="WizardZipFileResourceExportPage1.STORE_DESTINATION_NAMES_ID">
+			<item value="/Users/StephenTHSher/Desktop/tsher_CSCI201_Final.zip;*.tar.gz;*.tar;*.tgz"/>
+			<item value="/Users/StephenTHSher/Desktop/tsher_CSCI201_Assignment5.zip;*.tar.gz;*.tar;*.tgz"/>
 			<item value="/Users/StephenTHSher/Desktop/tsher_CSCI201_Assignment4.zip;*.tar.gz;*.tar;*.tgz"/>
 			<item value="/Users/StephenTHSher/Desktop/chat.zip;*.tar.gz;*.tar;*.tgz"/>
 			<item value="/Users/StephenTHSher/Desktop/tsher_CSCI201_Assignment3.zip;*.tar.gz;*.tar;*.zip;*.tar.gz;*.tar;*.tgz"/>

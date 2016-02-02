@@ -32,7 +32,43 @@ public class WaiterFactory {
 		lock.unlock();
 
 	}
+	
 
+	public WaiterThread getWaiterWithLeastTables(){
+		WaiterThread wt = null;
+		WaiterThread buffer = null;
+		try {
+			lock.lock();
+			while (wt == null) {
+				int i;
+				for (i=0; i < waiterThreadVector.size(); i++) {
+					buffer = waiterThreadVector.get(i);
+
+					if (buffer.getNumAvailableTables() > 0) {
+						if (wt == null)
+							wt = buffer;
+						else{
+							if (buffer.getNumAvailableTables() > wt.getNumAvailableTables()){
+								wt = buffer;
+							}
+						}
+					}
+				}
+				if (i == waiterThreadVector.size() && wt == null) {
+					// if i get here, i haven't secured a waiter yet
+					System.out.println("MARKER");
+					wt = null;
+					waiterAvailable.await();
+				}
+			}
+		} catch(InterruptedException ie) {
+			System.out.println("WaiterFactory.getWaiter(): IE : " + ie.getMessage());
+		} finally {
+			lock.unlock();
+		}
+		return wt;
+	}
+	
 	public WaiterThread getWaiter() {
 		WaiterThread wt = null;
 		try {
@@ -41,15 +77,14 @@ public class WaiterFactory {
 				int i;
 				for (i=0; i < waiterThreadVector.size(); i++) {
 					wt = waiterThreadVector.get(i);
-					// this will only allow one table per waiter
-					// use a semaphore to allow more than one table per waiter
+
 					if (wt.getNumAvailableTables() > 0) {
-//					if (wt.getTable() == null) {
 						break;
 					}
 				}
 				if (i == waiterThreadVector.size()) {
 					// if i get here, i haven't secured a waiter yet
+					wt = null;
 					waiterAvailable.await();
 				}
 			}
@@ -82,6 +117,10 @@ class WaiterThread extends Thread {
 		this.start();
 	}
 
+	public void takeOrder(Table table){
+		table.getCustomer().setState(1);
+	}
+	
 	public int getNumAvailableTables() {
 		int numPermitsAvailable = numTablesSemaphore.availablePermits();
 		return numPermitsAvailable;
@@ -131,6 +170,22 @@ class WaiterThread extends Thread {
 				this.tableAssignedCondition.await();
 				this.waiterLock.unlock();
 				Thread.sleep(1000 * (int)(Math.random() * 10)); // sleep for between 0 and 10 seconds
+				
+				Restaurant.addMessage("Customer " + getTable(0).getCustomer().getCustomerNumber() + " is ordering food");
+				
+				Thread.sleep(1000 * (int)(Math.random() * 10));
+				
+				Restaurant.addMessage("Customer " + getTable(0).getCustomer().getCustomerNumber() + " is eating");
+				
+				Thread.sleep(1000 * (int)(Math.random() * 10));
+				
+				Restaurant.addMessage("Customer " + getTable(0).getCustomer().getCustomerNumber() + " is now paying");
+
+				getTable(0).getCustomer().lock.lock();
+				getTable(0).getCustomer().condition.signal();
+				getTable(0).getCustomer().lock.unlock();
+
+				
 				if (getTable(0) != null) {
 					getTable(0).getLock().lock();
 					// signal the customer who is "eating"

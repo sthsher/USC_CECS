@@ -25,9 +25,14 @@ public class Restaurant extends JFrame {
 	private JComboBox<Integer> jcbNumWaiters, jcbNumBusboys, jcbNumTables, jcbNumTablesPerWaiter, jcbNumTablesPerBusboy;
 	private JButton jbRestaurant;
 	private CustomerFactory customerFactory;
+	public static BusboyFactory busboyFactory;
 	private static WaiterFactory waiterFactory;
 	private JPanel waitersPanel;
 	private static JTextArea jtaWaiters[];
+	
+	//Lab 12
+	public static int numOfBusboys;
+	public static int numOfBusboysPerTable;
 	
 	private JLabel openTableLabel = new JLabel("Opened Tables");
 	public static JLabel openTableContents = new JLabel("");
@@ -55,7 +60,7 @@ public class Restaurant extends JFrame {
 		addComboBox(jp, jlNumTablesPerWaiter, jcbNumTablesPerWaiter, 0, 1);
 		JLabel jlNumBusboys = new JLabel("Number of Busboys");
 		addComboBox(jp, jlNumBusboys, jcbNumBusboys, 2, 0);
-		JLabel jlNumTablesPerBusboy = new JLabel("Number of Tables Per Busboy");
+		JLabel jlNumTablesPerBusboy = new JLabel("Number of Busboys Per Table");
 		addComboBox(jp, jlNumTablesPerBusboy, jcbNumTablesPerBusboy, 2, 1);
 		JLabel jlNumTables = new JLabel("Number of Tables");
 		addComboBox(jp, jlNumTables, jcbNumTables, 0, 2);
@@ -68,7 +73,6 @@ public class Restaurant extends JFrame {
 
 		addComponent(jp, closeTableLabel, 1, 3, GridBagConstraints.CENTER, 2, 1);
 		addComponent(jp, closeTableContents, 1, 4, GridBagConstraints.CENTER, 2, 2);
-
 
 		
 //		jp.add(openTableLabel, c);
@@ -83,7 +87,9 @@ public class Restaurant extends JFrame {
 					addMessage("Number of waiters: " + getNumWaiters());
 					addMessage("Number of tables per waiter: " + getNumTablesPerWaiter());
 					addMessage("Number of busboys: " + getNumBusboys());
+					numOfBusboys = getNumBusboys();
 					addMessage("Number of tables per busboy: " + getNumTablesPerBusboy());
+					numOfBusboysPerTable = getNumTablesPerBusboy();
 					addMessage("RESTAURANT STARTED");
 					addMessage("***********************************");
 					jbRestaurant.setText("Stop Restaurant");
@@ -102,6 +108,8 @@ public class Restaurant extends JFrame {
 					// MULTI-THREADING PART OF CODE
 					Hostess ht = new Hostess(getNumTables());
 					waiterFactory = new WaiterFactory(ht, getNumWaiters(), getNumTablesPerWaiter());
+					busboyFactory = new BusboyFactory(ht, getNumBusboys());
+					
 					customerFactory = new CustomerFactory(ht);
 
 				}
