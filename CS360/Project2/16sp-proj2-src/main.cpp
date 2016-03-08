@@ -86,6 +86,8 @@ int main(int argc, char **argv)
 
 	Project2 p2(sim1); // project 2 object
 
+    p2.getOptimalAction(sim1, r1);
+
     while (!sim1->robotFoundTarget()) {  // loop until your robot find the target
         RobotAction a;
         r1->setRobotAction((a = p2.getOptimalAction(sim1, r1)));
@@ -127,6 +129,7 @@ int main(int argc, char **argv)
         usleep(1000*waitCounter);
         #endif
     }
+
     if (isRobotAlive) printf("My robot found the target in %d steps !!! \n\n", steps);
     else printf("Robot died in %d steps\n", steps);
     printf("Number of steps stopped: %d\n", stoppedSteps);
