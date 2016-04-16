@@ -7,7 +7,7 @@
 */
 Project2::Project2(Simulator* sim1) {
 	this->sim = sim1;
-
+	numExpansions = 0;
 	// Here, you should initialize the grid with all the known obstacles.
 	// Initialize entire grid to 0's
 	for (int i = 0; i < sim->SX; ++i){
@@ -64,9 +64,18 @@ RobotAction Project2::getOptimalAction(Simulator* sim1, Robot* r1) {
 
 	AStar( Point2D( (int)(sim->getRobot()->X) ,(int)(sim->getRobot()->Y) ));
 
+	float pathLength = 0;
+
 	//Identify the next node to traverse
 	AStarNode* nextNode = AREA[(int)sim->getTarget().x][(int)sim->getTarget().y];
-	while (nextNode->GetParent() != AREA[(int)sim->getRobot()->X][(int)sim->getRobot()->Y]){
+	while (nextNode->GetParent() != NULL){
+		if (IsDiagonal(nextNode->GetPoint(), nextNode->GetParent()->GetPoint())) {
+			pathLength += 1.5;
+		} else{
+			pathLength += 1.0;
+		}
+		std::cout << "{" << nextNode->GetX() << "," << nextNode->GetY() << "}" << std::endl;
+		// std::cout << pathLength << std::endl;
 		nextNode = nextNode->GetParent();
 	}
 
@@ -75,7 +84,7 @@ RobotAction Project2::getOptimalAction(Simulator* sim1, Robot* r1) {
 	int nextX = (int)nextNode->GetX();
 	int nextY = (int)nextNode->GetY();
 
-/*
+
 	//------- Print the path -------
 	//stat from target
 	
@@ -110,7 +119,12 @@ RobotAction Project2::getOptimalAction(Simulator* sim1, Robot* r1) {
 	}
 	
 	//------------------------------
-*/
+
+	std::cout << "----------------" << std::endl;
+	std::cout << "Expansions:  " << numExpansions << std::endl;
+	std::cout << "Path Length: " << pathLength << std::endl;
+	std::cout << "----------------" << std::endl;
+
 
 	//Case: Up-LEFT
 	if (robotX > nextX &&
@@ -204,6 +218,7 @@ void Project2::AStar(Point2D point){
 
 
 	while(!openHeap.empty()){
+		++numExpansions;
 
 		std::sort(openHeap.begin(), openHeap.end(), Project2::CompareNode);
 
@@ -219,9 +234,9 @@ void Project2::AStar(Point2D point){
 			float newFValue = 0;
 				//successor's h value + current's g value + distance
 				if (IsDiagonal((*it)->GetPoint(), node->GetPoint())){
-					newFValue = (*it)->GetHValue() + (node->GetGValue() + 1.5);
+					newFValue = (WVALUE * (*it)->GetHValue()) + (node->GetGValue() + 1.5);
 				} else{
-					newFValue = (*it)->GetHValue() + (node->GetGValue() + 1.0);
+					newFValue = (WVALUE * (*it)->GetHValue()) + (node->GetGValue() + 1.0);
 				}
 
 			if (std::find(openHeap.begin(), openHeap.end(), (*it)) != openHeap.end()){

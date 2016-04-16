@@ -88,47 +88,47 @@ int main(int argc, char **argv)
 
     p2.getOptimalAction(sim1, r1);
 
-    while (!sim1->robotFoundTarget()) {  // loop until your robot find the target
-        RobotAction a;
-        r1->setRobotAction((a = p2.getOptimalAction(sim1, r1)));
-        if (a == STOP) {
-            pathLength  += 0;
-            stoppedSteps++;
-        }
-        else if (a == MOVE_DOWN_LEFT || a == MOVE_DOWN_RIGHT || a == MOVE_UP_LEFT || a == MOVE_UP_RIGHT) {
-            pathLength += 1.5;
-            diagSteps++;
-        } else {
-            pathLength += 1.0;
-            horVertSteps++;
-        }
-        if (debugShowHiddenSensorData) {
-            std::vector<Point2D> hs = sim1->getLocalObstacleLocations(r1->getPosition(), true);
-            if (hs.size() > 0) {
-                std::cout<<"Hidden object at location(s): "<<std::endl;
-                for (int i=0; i<hs.size(); i++) {
-                    std::cout<<"("<<hs[i].x<<","<<hs[i].y<<")"<<std::endl;
-                }
-            }
-        }
+    // while (!sim1->robotFoundTarget()) {  // loop until your robot find the target
+    //     RobotAction a;
+    //     r1->setRobotAction((a = p2.getOptimalAction(sim1, r1)));
+    //     if (a == STOP) {
+    //         pathLength  += 0;
+    //         stoppedSteps++;
+    //     }
+    //     else if (a == MOVE_DOWN_LEFT || a == MOVE_DOWN_RIGHT || a == MOVE_UP_LEFT || a == MOVE_UP_RIGHT) {
+    //         pathLength += 1.5;
+    //         diagSteps++;
+    //     } else {
+    //         pathLength += 1.0;
+    //         horVertSteps++;
+    //     }
+    //     if (debugShowHiddenSensorData) {
+    //         std::vector<Point2D> hs = sim1->getLocalObstacleLocations(r1->getPosition(), true);
+    //         if (hs.size() > 0) {
+    //             std::cout<<"Hidden object at location(s): "<<std::endl;
+    //             for (int i=0; i<hs.size(); i++) {
+    //                 std::cout<<"("<<hs[i].x<<","<<hs[i].y<<")"<<std::endl;
+    //             }
+    //         }
+    //     }
         
-        // call the simulator to move your robot and count the steps
+    //     // call the simulator to move your robot and count the steps
         
-        sim1->moveRobot();
-        sim1->display();
-        if (sim1->testForRobotDeath(r1->getPosition().x, r1->getPosition().y)) {
-            std::cout<<"Robot dead. Stepped on obstacle at ("<<
-            r1->getPosition().x<<","<<r1->getPosition().y<<")"<<std::endl;
-            isRobotAlive = false;
-            break;
-        }
-        steps++;
-        #if defined(_WIN32) || defined(_WIN64)
-        Sleep(waitCounter);
-        #else
-        usleep(1000*waitCounter);
-        #endif
-    }
+    //     sim1->moveRobot();
+    //     sim1->display();
+    //     if (sim1->testForRobotDeath(r1->getPosition().x, r1->getPosition().y)) {
+    //         std::cout<<"Robot dead. Stepped on obstacle at ("<<
+    //         r1->getPosition().x<<","<<r1->getPosition().y<<")"<<std::endl;
+    //         isRobotAlive = false;
+    //         break;
+    //     }
+    //     steps++;
+    //     #if defined(_WIN32) || defined(_WIN64)
+    //     Sleep(waitCounter);
+    //     #else
+    //     usleep(1000*waitCounter);
+    //     #endif
+    // }
 
     if (isRobotAlive) printf("My robot found the target in %d steps !!! \n\n", steps);
     else printf("Robot died in %d steps\n", steps);

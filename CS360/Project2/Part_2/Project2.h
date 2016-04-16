@@ -9,6 +9,7 @@
 #include "Vector2D.h"
 #include "Simulator.h"
 
+#define WVALUE 10
 #define OBSTACLE_TILE -1
 #define UNEXPANDED_TILE -2
 
@@ -25,6 +26,7 @@ private:
 		Point2D point;
 		AStarNode* parent;
 		std::vector<AStarNode*> neighbors;
+		float wValue;
 
 	public:
 
@@ -35,6 +37,7 @@ private:
 			point(point),
 			parent(NULL)
 		{
+			wValue = WVALUE;
 			hValue = gValue = fValue = UNEXPANDED_TILE;
 			print = false;
 		}
@@ -54,7 +57,7 @@ private:
 		void SetGValue(float g){
 			gValue = g;
 			//F value should already have been set, so also set f value
-			fValue = gValue + hValue;
+			fValue = gValue + (wValue * hValue);
 		}
 
 		void SetFValue(float f){
@@ -162,6 +165,8 @@ private:
 	void AStar(Point2D point);
 	bool IsDiagonal(Point2D a, Point2D b);
 	void GenerateNeighbors();
+
+	int numExpansions;
 
 public:
 	/**
