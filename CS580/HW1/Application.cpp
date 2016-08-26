@@ -3,9 +3,9 @@
  * USC csci 580 *
 */
 
-// 
+/*
 Application.cpp: implementation of the Application class.
-//
+*/
 
 #include "stdafx.h"
 #include "CS580HW.h"
