@@ -7,3 +7,7 @@
 *.vcproj
 */Release
 *.sdf
+*htm
+*console.txt
+*ipch/
+*.ppm
