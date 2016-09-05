@@ -1,3 +1,9 @@
 .metadata
 *.o
 *.out
+*.sln
+*.opendb
+*.tlog
+*.vcproj
+*/Release
+*.sdf

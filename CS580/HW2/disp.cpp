@@ -90,7 +90,7 @@ int GzInitDisplay(GzDisplay	*display)
 		(display->fbuf)[i].green = 3000;
 		(display->fbuf)[i].blue = 3000;
 		(display->fbuf)[i].alpha = 1;
-		(display->fbuf)[i].z = 0;
+		(display->fbuf)[i].z = MAXINT;
 	}
 
 	return GZ_SUCCESS;
@@ -117,14 +117,17 @@ int GzPutDisplay(GzDisplay *display, int i, int j, GzIntensity r, GzIntensity g,
 		r = ClampGzIntensity(r);
 		g = ClampGzIntensity(g);
 		b = ClampGzIntensity(b);
-		a = ClampGzIntensity(a);
-		z = ClampGzIntensity(z);
 
-		(display->fbuf)[index].red = r;
-		(display->fbuf)[index].green = g;
-		(display->fbuf)[index].blue = b;
-		(display->fbuf)[index].alpha = a;
-		(display->fbuf)[index].z = z;
+		//compare z values
+		if ((display->fbuf)[index].z > z)
+		{
+			//update
+			(display->fbuf)[index].red = r;
+			(display->fbuf)[index].green = g;
+			(display->fbuf)[index].blue = b;
+			(display->fbuf)[index].alpha = a;
+			(display->fbuf)[index].z = z;
+		}
 	}
 	return GZ_SUCCESS;
 }
