@@ -11,3 +11,5 @@
 *console.txt
 *ipch/
 *.ppm
+*.tlog
+*.obj
