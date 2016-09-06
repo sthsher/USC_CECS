@@ -48,7 +48,7 @@ int GzBeginRender(GzRender	*render)
 		return GZ_FAILURE;
 	}
 }
-
+#include <fstream>
 
 int GzPutAttribute(GzRender	*render, int numAttributes,
 	GzToken	*nameList, GzPointer *valueList) /* void** valuelist */
@@ -63,9 +63,9 @@ int GzPutAttribute(GzRender	*render, int numAttributes,
 	{
 		if (*nameList == GZ_RGB_COLOR)
 		{
-			render->flatcolor[RED] = *((static_cast<GzColor*>(*valueList))[RED]);
-			render->flatcolor[GREEN] = *((static_cast<GzColor*>(*valueList))[GREEN]);
-			render->flatcolor[BLUE] = *((static_cast<GzColor*>(*valueList))[BLUE]);
+			render->flatcolor[RED] = (*static_cast<GzColor*>(*valueList))[RED];
+			render->flatcolor[GREEN] = (*static_cast<GzColor*>(*valueList))[GREEN];
+			render->flatcolor[BLUE] = (*static_cast<GzColor*>(*valueList))[BLUE];
 		}
 
 		//iterate GzToken
@@ -76,8 +76,6 @@ int GzPutAttribute(GzRender	*render, int numAttributes,
 
 	return GZ_SUCCESS;
 }
-
-#include <fstream>
 
 #define TOP 0
 #define LEFT 1
@@ -212,12 +210,10 @@ int GzPutTriangle(GzRender *render, int	numParts,
 				vertexA[X] <= vertexB[X] ? equateGzCoord(vertices[RIGHT], vertexB) : equateGzCoord(vertices[RIGHT], vertexA);
 			}
 
-			std::ofstream console("console.txt", std::ios::app);
-
 			//Doesn't seem to happen
 			if (vertices[TOP][Y] == vertices[LEFT][Y] || vertices[TOP][Y] == vertices[RIGHT][Y] || vertices[LEFT][Y] == vertices[RIGHT][Y])
 			{
-				console << "Special case\n";
+				//console << "Special case\n";
 			}
 
 			//Case 1:
@@ -242,22 +238,8 @@ int GzPutTriangle(GzRender *render, int	numParts,
 				float interceptA = vertices[TOP][X] - (slopeA * vertices[TOP][Y]);
 				float interceptB = vertices[RIGHT][X] - (slopeB * vertices[RIGHT][Y]);
 
-				float xLeft = vertices[TOP][X];
-				float xRight = vertices[TOP][X];
-
-				//if (vertices[TOP][X] > 38 && vertices[TOP][X] < 50 &&
-				//	vertices[TOP][Y] > 29 && vertices[TOP][Y] < 45)
-				//{
-				//	console << "MARKER\n";
-				//	console << "Triangle:" << std::endl;
-				//	console << "VertexA: " << vertexA[X] << " " << vertexA[Y] << " " << vertexA[Z] << std::endl;
-				//	console << "VertexB: " << vertexB[X] << " " << vertexB[Y] << " " << vertexB[Z] << std::endl;
-				//	console << "VertexC: " << vertexC[X] << " " << vertexC[Y] << " " << vertexC[Z] << std::endl;
-				//	console << "Top    : " << vertices[TOP][X] << " " << vertices[TOP][Y] << " " << vertices[TOP][Z] << std::endl;
-				//	console << "LEFT   : " << vertices[LEFT][X] << " " << vertices[LEFT][Y] << " " << vertices[LEFT][Z] << std::endl;
-				//	console << "RIGHT  : " << vertices[RIGHT][X] << " " << vertices[RIGHT][Y] << " " << vertices[RIGHT][Z] << std::endl;
-				//	console << std::endl;
-				//}
+				float xLeft = 0;
+				float xRight = 0;
 
 				//scan set 1
 				for (float j = ceil(vertices[TOP][Y]); j < vertices[RIGHT][Y]; j = j + 1)
@@ -338,8 +320,8 @@ int GzPutTriangle(GzRender *render, int	numParts,
 				float interceptA = vertices[TOP][X] - (slopeA * vertices[TOP][Y]);
 				float interceptB = vertices[LEFT][X] - (slopeB * vertices[LEFT][Y]);
 
-				float xLeft = vertices[TOP][X];
-				float xRight = vertices[TOP][X];				
+				float xLeft = 0;
+				float xRight = 0;				
 
 				//scan set 1
 				for (float j = ceil(vertices[TOP][Y]); j < vertices[LEFT][Y]; j = j + 1)
@@ -397,9 +379,54 @@ int GzPutTriangle(GzRender *render, int	numParts,
 				}
 			}
 
+			//Case 3:
+			//Left is same height as right
+			/*
+					TOP
+
+
+			LEFT			RIGHT
+			*/
 			else
 			{
-				console << "ELSE\n";
+				//calculate slopes
+				float mainSlope = calculateSlope(vertices[TOP], vertices[LEFT]);
+				float slopeA = calculateSlope(vertices[TOP], vertices[RIGHT]);
+
+				//intercept = x - slope(y)
+				float interceptM = vertices[TOP][X] - (mainSlope * vertices[TOP][Y]);
+				float interceptA = vertices[TOP][X] - (slopeA * vertices[TOP][Y]);
+
+				float xLeft = 0;
+				float xRight = 0;
+
+				//scan set 1
+				for (float j = ceil(vertices[TOP][Y]); j < vertices[LEFT][Y]; j = j + 1)
+				{
+					//for every j increment, calculate the x interpolations
+					xLeft = interpolateX(mainSlope, interceptM, j);
+					xRight = interpolateX(slopeA, interceptA, j);
+
+					//iterate through scan line
+					for (float i = ceil(xLeft); i <= xRight; i = i + 1)
+					{
+						//interpolate Z
+						float Z_ = interpolateZ(vertices, static_cast<int>(i), static_cast<int>(j));
+
+						//draw
+						GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
+					}
+
+					//Scan left
+					for (float i = ceil(xRight); i < xLeft; i = i + 1)
+					{
+						//interpolate Z
+						float Z_ = interpolateZ(vertices, static_cast<int>(i), static_cast<int>(j));
+
+						//draw
+						GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
+					}
+				}
 			}
 		}
 	}
