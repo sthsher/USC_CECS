@@ -81,6 +81,10 @@ int GzPutAttribute(GzRender	*render, int numAttributes,
 #define LEFT 1
 #define RIGHT 2
 
+#define TOP2 1
+#define SIDE 1
+#define BOT 2
+
 void equateGzCoord(GzCoord& left, const GzCoord right)
 {
 	left[X] = right[X];
@@ -105,7 +109,7 @@ float calculateSlope(const GzCoord point1, const GzCoord point2)
 	return xDelta / yDelta;
 }
 
-float interpolateX(const float slope, const float intercept, const float y)
+float interpolateX(const float slope, const float intercept, const int y)
 {
 	//x = my + b
 	return ((slope * y) + intercept);
@@ -216,6 +220,70 @@ int GzPutTriangle(GzRender *render, int	numParts,
 				//console << "Special case\n";
 			}
 
+			//Special Cases:
+			//top two vertices are same height
+			//		TOP1			TOP2
+			//
+			//
+			//
+			//				BOT
+			if (vertices[TOP][Y] == vertices[LEFT][Y] || vertices[TOP][Y] == vertices[RIGHT][Y])
+			{
+				vertices[TOP][Y] == vertices[LEFT][Y] ? equateGzCoord(vertices[TOP2], vertices[LEFT]) : equateGzCoord(vertices[TOP2], vertices[RIGHT]);
+				vertices[TOP][Y] == vertices[LEFT][Y] ? equateGzCoord(vertices[BOT], vertices[RIGHT]) : equateGzCoord(vertices[BOT], vertices[LEFT]);
+
+				//calculate slopes
+				float mainSlope = calculateSlope(vertices[TOP], vertices[BOT]);
+				float slopeA = calculateSlope(vertices[TOP2], vertices[BOT]);
+
+				//intercepts
+				float interceptM = vertices[BOT][X] - (mainSlope * vertices[BOT][Y]);
+				float interceptA = vertices[BOT][X] - (slopeA * vertices[BOT][Y]);
+
+				float xLeft = 0;
+				float xRight = 0;
+
+				//scan
+				for (int j = static_cast<int>(ceil(vertices[TOP][Y])); j < vertices[BOT][Y]; ++j)
+				{
+					//calculate x interpolations
+					xLeft = interpolateX(mainSlope, interceptM, j);
+					xRight = interpolateX(slopeA, interceptA, j);
+
+					//scan
+					for (int i = static_cast<int>(ceil(xLeft)); i < xRight; ++i)
+					{
+						//interpolate Z
+						int Z_ = interpolateZ(vertices, i, j);
+
+						//draw
+						GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
+					}
+
+					//scan
+					for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
+					{
+						//interpolate Z
+						int Z_ = interpolateZ(vertices, i, j);
+
+						//draw
+						GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
+					}
+				}
+			}
+
+			//vertical lines
+			//		TOP											TOP
+			//			
+			//					SIDE				SIDE
+			//
+			//		BOT											BOT
+
+			else if (vertices[TOP][X] == vertices[LEFT][X] || vertices[TOP][X] == vertices[RIGHT][X])
+			{
+				//Add as needed
+			}
+
 			//Case 1:
 			//Left is lower than right
 			/*
@@ -226,7 +294,7 @@ int GzPutTriangle(GzRender *render, int	numParts,
 
 					LEFT
 			*/
-			if (vertices[LEFT][Y] > vertices[RIGHT][Y])
+			else if (vertices[LEFT][Y] > vertices[RIGHT][Y])
 			{
 				//calculate slopes
 				float mainSlope = calculateSlope(vertices[TOP], vertices[LEFT]);
@@ -242,26 +310,26 @@ int GzPutTriangle(GzRender *render, int	numParts,
 				float xRight = 0;
 
 				//scan set 1
-				for (float j = ceil(vertices[TOP][Y]); j < vertices[RIGHT][Y]; j = j + 1)
+				for (int j = static_cast<int>(ceil(vertices[TOP][Y])); j < vertices[RIGHT][Y]; ++j)
 				{
 					//for every j increment, calculate the x interpolations
 					xLeft = interpolateX(mainSlope, interceptM, j);
 					xRight = interpolateX(slopeA, interceptA, j);
 
 					//iterate through scan line
-					for (float i = ceil(xLeft); i < xRight; i = i + 1)
+					for (int i = static_cast<int>(ceil(xLeft)); i < xRight; ++i)
 					{
 						//interpolate Z
-						float Z_ = interpolateZ(vertices, static_cast<int>(i), static_cast<int>(j));
+						int Z_ = interpolateZ(vertices, i, j);
 
 						//draw
 						GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
 					}
 					
-					for (float i = ceil(xRight); i < xLeft; i = i + 1)
+					for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
 					{
 						//interpolate Z
-						float Z_ = interpolateZ(vertices, static_cast<int>(i), static_cast<int>(j));
+						int Z_ = interpolateZ(vertices, i, j);
 
 						//draw
 						GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
@@ -269,27 +337,27 @@ int GzPutTriangle(GzRender *render, int	numParts,
 				}
 
 				//scan set 2
-				for (float j = ceil(vertices[RIGHT][Y]); j < vertices[LEFT][Y]; j = j + 1)
+				for (int j = static_cast<int>(ceil(vertices[RIGHT][Y])); j < vertices[LEFT][Y]; ++j)
 				{
 					//for every j increment, calculate the x interpolations
 					xLeft = interpolateX(mainSlope, interceptM, j);
 					xRight = interpolateX(slopeB, interceptB, j);
 
 					//iterate through scan line
-					for (float i = ceil(xLeft); i < xRight; i = i + 1)
+					for (int i = static_cast<int>(ceil(xLeft)); i < xRight; ++i)
 					{
 						//interpolate Z
-						float Z_ = interpolateZ(vertices, static_cast<int>(i), static_cast<int>(j));
+						int Z_ = interpolateZ(vertices, i, j);
 
 						//draw
 						GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
 					}
 
 					//Scan left
-					for (float i = ceil(xRight); i < xLeft; i = i + 1)
+					for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
 					{
 						//interpolate Z
-						float Z_ = interpolateZ(vertices, static_cast<int>(i), static_cast<int>(j));
+						int Z_ = interpolateZ(vertices, i, j);
 
 						//draw
 						GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
@@ -307,7 +375,6 @@ int GzPutTriangle(GzRender *render, int	numParts,
 
 									RIGHT
 			*/
-
 			else if (vertices[LEFT][Y] < vertices[RIGHT][Y])
 			{
 				//calculate slopes
@@ -324,27 +391,27 @@ int GzPutTriangle(GzRender *render, int	numParts,
 				float xRight = 0;				
 
 				//scan set 1
-				for (float j = ceil(vertices[TOP][Y]); j < vertices[LEFT][Y]; j = j + 1)
+				for (int j = static_cast<int>(ceil(vertices[TOP][Y])); j < vertices[LEFT][Y]; ++j)
 				{
 					//for every j increment, calculate the x interpolations
 					xLeft = interpolateX(slopeA, interceptA, j);
 					xRight = interpolateX(mainSlope, interceptM, j);
 
 					//iterate through scan line
-					for (float i = ceil(xLeft); i <= xRight; i = i + 1)
+					for (int i = static_cast<int>(ceil(xLeft)); i <= xRight; ++i)
 					{
 						//interpolate Z
-						float Z_ = interpolateZ(vertices, static_cast<int>(i), static_cast<int>(j));
+						int Z_ = interpolateZ(vertices, i, j);
 
 						//draw
 						GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
 					}
 
 					//Scan left
-					for (float i = ceil(xRight); i < xLeft; i = i + 1)
+					for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
 					{
 						//interpolate Z
-						float Z_ = interpolateZ(vertices, static_cast<int>(i), static_cast<int>(j));
+						int Z_ = interpolateZ(vertices, i, j);
 
 						//draw
 						GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
@@ -352,26 +419,26 @@ int GzPutTriangle(GzRender *render, int	numParts,
 				}
 
 				//scan set 2
-				for (float j = ceil(vertices[LEFT][Y]); j < vertices[RIGHT][Y]; j = j + 1)
+				for (int j = static_cast<int>(ceil(vertices[LEFT][Y])); j < vertices[RIGHT][Y]; ++j)
 				{
 					//for every j increment, calculate the x interpolations
 					xLeft = interpolateX(slopeB, interceptB, j);
 					xRight = interpolateX(mainSlope, interceptM, j);
 
 					//iterate through scan line
-					for (float i = ceil(xLeft); i <= xRight; i = i + 1)
+					for (int i = static_cast<int>(ceil(xLeft)); i <= xRight; ++i)
 					{
 						//interpolate Z
-						float Z_ = interpolateZ(vertices, static_cast<int>(i), static_cast<int>(j));
+						int Z_ = interpolateZ(vertices, i, j);
 
 						//draw
 						GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
 					}
 					//Scan left
-					for (float i = ceil(xRight); i < xLeft; i = i + 1)
+					for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
 					{
 						//interpolate Z
-						float Z_ = interpolateZ(vertices, static_cast<int>(i), static_cast<int>(j));
+						int Z_ = interpolateZ(vertices, i, j);
 
 						//draw
 						GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
@@ -401,27 +468,27 @@ int GzPutTriangle(GzRender *render, int	numParts,
 				float xRight = 0;
 
 				//scan set 1
-				for (float j = ceil(vertices[TOP][Y]); j < vertices[LEFT][Y]; j = j + 1)
+				for (int j = static_cast<int>(ceil(vertices[TOP][Y])); j < vertices[LEFT][Y]; ++j)
 				{
 					//for every j increment, calculate the x interpolations
 					xLeft = interpolateX(mainSlope, interceptM, j);
 					xRight = interpolateX(slopeA, interceptA, j);
 
 					//iterate through scan line
-					for (float i = ceil(xLeft); i <= xRight; i = i + 1)
+					for (int i = static_cast<int>(ceil(xLeft)); i <= xRight; ++i)
 					{
 						//interpolate Z
-						float Z_ = interpolateZ(vertices, static_cast<int>(i), static_cast<int>(j));
+						int Z_ = interpolateZ(vertices, i, j);
 
 						//draw
 						GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
 					}
 
 					//Scan left
-					for (float i = ceil(xRight); i < xLeft; i = i + 1)
+					for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
 					{
 						//interpolate Z
-						float Z_ = interpolateZ(vertices, static_cast<int>(i), static_cast<int>(j));
+						int Z_ = interpolateZ(vertices, i, j);
 
 						//draw
 						GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
