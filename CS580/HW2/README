@@ -1,0 +1,8 @@
+CSCI 580 Fall 2016
+Homework 2 Readme
+
+Name:       Tsung-Han Sher
+ID:         7555500940
+VS Version: Community 2015
+
+Have yet to implement the edge cases of perfect vertical edges (will cause divide by 0 exception)
