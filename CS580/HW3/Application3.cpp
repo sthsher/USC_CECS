@@ -19,7 +19,7 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
-#define INFILE3  "pot4.asc"
+#define INFILE3  "tri.asc"
 #define OUTFILE3 "output.ppm"
 
 void shade(GzCoord norm, GzCoord color);

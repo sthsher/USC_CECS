@@ -6,7 +6,6 @@
 #include	"Gz.h"
 #include	"rend.h"
 
-
 #define TOP 0
 #define LEFT 1
 #define RIGHT 2
@@ -14,6 +13,8 @@
 #define TOP2 1
 #define SIDE 1
 #define BOT 2
+
+#define PI 3.14159265358979
 
 /* NOT part of API - just for general assistance */
 
@@ -67,10 +68,22 @@ int GzScaleMat(GzCoord scale, GzMatrix mat)
 }
 
 
+void initializeXsp(GzMatrix* Xsp, const unsigned short xs, const unsigned short ys)
+{
+	(*Xsp)[0][0] = static_cast<float>(xs / 2);
+	(*Xsp)[1][1] = static_cast<float>(-1 * (ys / 2));
+	(*Xsp)[3][0] = static_cast<float>(xs / 2);
+	(*Xsp)[3][1] = static_cast<float>(ys / 2);
+	(*Xsp)[2][2] = static_cast<float>(MAXINT);
+	(*Xsp)[3][3] = 1;
+
+	return;
+}
+
 //----------------------------------------------------------
 // Begin main functions
 
-int GzNewRender(GzRender **render, GzDisplay	*display)
+int GzNewRender(GzRender **render, GzDisplay *display)
 {
 /*  
 - malloc a renderer struct 
@@ -81,6 +94,23 @@ int GzNewRender(GzRender **render, GzDisplay	*display)
 
 	*render = new GzRender;
 	(*render)->display = display;
+
+	//setup render->Xsp
+	unsigned short xs = display->xres;
+	unsigned short ys = display->yres;
+	initializeXsp(&((*render)->Xsp), display->xres, display->yres);
+
+	//push this matrix onto the stack
+	GzPushMatrix(*render, (*render)->Xsp);
+
+	//initialize default camera
+	(*render)->camera.FOV = DEFAULT_FOV;
+	(*render)->camera.lookat[X] = 0;
+	(*render)->camera.lookat[Y] = 0;
+	(*render)->camera.lookat[Z] = 0;
+
+	//initialize stack counter
+	(*render)->matlevel = 0;
 
 	return GZ_SUCCESS;
 }
@@ -109,14 +139,6 @@ int GzBeginRender(GzRender *render)
 - init Ximage - put Xsp at base of stack, push on Xpi and Xiw 
 - now stack contains Xsw and app can push model Xforms when needed 
 */ 
-	return GZ_SUCCESS;
-}
-
-int GzPutCamera(GzRender *render, GzCamera *camera)
-{
-/*
-- overwrite renderer camera structure with new camera definition
-*/
 	if (GzInitDisplay(render->display) == GZ_SUCCESS)
 	{
 		return GZ_SUCCESS;
@@ -127,12 +149,121 @@ int GzPutCamera(GzRender *render, GzCamera *camera)
 	}
 }
 
+float calculateDistance(const float x1, const float y1, const float z1, const float x2, const float y2, const float z2)
+{
+	double pow1 = pow(x2 - x1, 2);
+	double pow2 = pow(y2 - y1, 2);
+	double pow3 = pow(z2 - z1, 2);
+	return static_cast<float>(sqrt(pow1 + pow2 + pow3));
+}
+
+float calculateDotProduct(const float x1, const float y1, const float z1, const float x2, const float y2, const float z2)
+{
+	return (x1 * x2) + (y1 * y2) + (z1 * z2);
+}
+
+int GzPutCamera(GzRender *render, GzCamera *camera)
+{
+	/*
+	- overwrite renderer camera structure with new camera definition
+	*/
+
+	//Has position, lookat, worldup, and FOV
+	//calculate Xiw and Xip
+	(camera->Xpi)[0][0] = 1;
+	(camera->Xpi)[1][1] = 1;
+	(camera->Xpi)[3][3] = 1;
+
+	//calculate 1/d = tan(FOV/2)
+	float dInverse = static_cast<float>(tan(camera->FOV * PI / (180 * 2)));
+	(camera->Xpi)[2][2] = dInverse;
+	(camera->Xpi)[2][3] = dInverse;
+
+
+	float z_axis[3], y_axis[3], x_axis[3];
+
+	//Zaxis = lookat point - origin / length
+	float cI_length = calculateDistance(camera->lookat[X], camera->lookat[Y], camera->lookat[Z], DEFAULT_IM_X, DEFAULT_IM_Y, DEFAULT_IM_Z);
+	z_axis[X] = static_cast<float>((camera->lookat[X] - DEFAULT_IM_X) / cI_length);
+	z_axis[Y] = static_cast<float>((camera->lookat[Y] - DEFAULT_IM_Y) / cI_length);
+	z_axis[Z] = static_cast<float>((camera->lookat[Z] - DEFAULT_IM_Z) / cI_length);
+
+	//Yaxis
+	float up_[3];
+	float dot_product = calculateDotProduct(camera->worldup[X], camera->worldup[Y], camera->worldup[Z], z_axis[X], z_axis[Y], z_axis[Z]);
+	/*
+								[ up.x ] -		[ Z.x ]
+		up_ = up - (up.Z)Z =	[ up.y ] - up.Z [ Z.y ]
+								[ up.z ] -		[ Z.z ]
+	*/
+
+	up_[X] = camera->worldup[X] - (dot_product * z_axis[X]);
+	up_[Y] = camera->worldup[Y] - (dot_product * z_axis[Y]);
+	up_[Z] = camera->worldup[Z] - (dot_product * z_axis[Z]);
+	float up_length = calculateDistance(up_[X], up_[Y], up_[Z], DEFAULT_IM_X, DEFAULT_IM_Y, DEFAULT_IM_Z);
+
+	y_axis[X] = up_[X] / up_length;
+	y_axis[Y] = up_[Y] / up_length;
+	y_axis[Z] = up_[Z] / up_length;
+
+	//Xaxis = Y x Z
+	x_axis[X] = (y_axis[Y] * z_axis[Z]) - (y_axis[Z] * z_axis[Y]);
+	x_axis[Y] = (y_axis[Z] * z_axis[X]) - (y_axis[X] * z_axis[Z]);
+	x_axis[Z] = (y_axis[X] * z_axis[Y]) - (y_axis[Y] * z_axis[X]);
+
+	//build Xwi
+	float XC = calculateDotProduct(x_axis[X], x_axis[Y], x_axis[Z], DEFAULT_IM_X, DEFAULT_IM_Y, DEFAULT_IM_Z);
+	float YC = calculateDotProduct(y_axis[X], y_axis[Y], y_axis[Z], DEFAULT_IM_X, DEFAULT_IM_Y, DEFAULT_IM_Z);
+	float ZC = calculateDotProduct(z_axis[X], z_axis[Y], z_axis[Z], DEFAULT_IM_X, DEFAULT_IM_Y, DEFAULT_IM_Z);
+
+	camera->Xiw[0][0] = x_axis[X];
+	camera->Xiw[0][1] = x_axis[Y];
+	camera->Xiw[0][2] = x_axis[Z];
+	camera->Xiw[0][3] = (-1) * XC;
+	camera->Xiw[1][0] = y_axis[X];
+	camera->Xiw[1][1] = y_axis[Y];
+	camera->Xiw[1][2] = y_axis[Z];
+	camera->Xiw[1][3] = (-1) * YC;
+	camera->Xiw[2][0] = z_axis[X];
+	camera->Xiw[2][1] = z_axis[Y];
+	camera->Xiw[2][2] = z_axis[Z];
+	camera->Xiw[2][3] = (-1) * ZC;
+	camera->Xiw[3][0] = 0;
+	camera->Xiw[3][1] = 0;
+	camera->Xiw[3][2] = 0;
+	camera->Xiw[3][3] = 1;
+
+	render->camera = *camera;
+
+	//push onto stack
+	GzPushMatrix(render, camera->Xpi);
+	GzPushMatrix(render, camera->Xiw);
+
+	return GZ_SUCCESS;
+
+}
+
 int GzPushMatrix(GzRender *render, GzMatrix	matrix)
 {
 /*
 - push a matrix onto the Ximage stack
 - check for stack overflow
 */
+	if (render->matlevel == MATLEVELS - 1)
+	{
+		return GZ_FAILURE;
+	}
+
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			(render->Ximage[render->matlevel])[i][j] = matrix[i][j];
+		}
+	}
+
+	++render->matlevel;
+
 	return GZ_SUCCESS;
 }
 
@@ -142,6 +273,14 @@ int GzPopMatrix(GzRender *render)
 - pop a matrix off the Ximage stack
 - check for stack underflow
 */
+
+	if (render->matlevel == 0)
+	{
+		return GZ_FAILURE;
+	}
+
+	--render->matlevel;
+
 	return GZ_SUCCESS;
 }
 
