@@ -108,6 +108,12 @@ int GzNewRender(GzRender **render, GzDisplay *display)
 	(*render)->camera.lookat[X] = 0;
 	(*render)->camera.lookat[Y] = 0;
 	(*render)->camera.lookat[Z] = 0;
+	(*render)->camera.position[X] = DEFAULT_IM_X;
+	(*render)->camera.position[Y] = DEFAULT_IM_Y;
+	(*render)->camera.position[Z] = DEFAULT_IM_Z;
+	(*render)->camera.worldup[X] = 0;
+	(*render)->camera.worldup[Y] = 1;
+	(*render)->camera.worldup[Z] = 0;
 
 	//initialize stack counter
 	(*render)->matlevel = 0;
@@ -254,15 +260,41 @@ int GzPushMatrix(GzRender *render, GzMatrix	matrix)
 		return GZ_FAILURE;
 	}
 
-	for (int i = 0; i < 4; ++i)
+	//for (int i = 0; i < 4; ++i)
+	//{
+	//	for (int j = 0; j < 4; ++j)
+	//	{
+	//		(render->Ximage[render->matlevel])[i][j] = matrix[i][j];
+	//	}
+	//}
+
+	if (render->matlevel == 0)
 	{
-		for (int j = 0; j < 4; ++j)
+		for (int i = 0; i < 4; ++i)
 		{
-			(render->Ximage[render->matlevel])[i][j] = matrix[i][j];
-		}
+			for (int j = 0; j < 4; ++j)
+			{
+				(render->Ximage[render->matlevel])[i][j] = matrix[i][j];
+			}
+		}	
 	}
 
-	++render->matlevel;
+	else
+	{
+		for (int i = 0; i < 4; ++i)
+		{
+			for (int j = 0; j < 4; ++j)
+			{
+				float value = 0;
+				for (int x = 0; x < 4; ++x)
+				{
+					value += (render->Ximage[render->matlevel][x][j] * matrix[i][x]);
+				}
+				render->Ximage[render->matlevel + 1][i][j] = value;
+			}
+		}
+		++render->matlevel;
+	}
 
 	return GZ_SUCCESS;
 }
@@ -373,6 +405,43 @@ int interpolateZ(const GzCoord* vertices, const int x, const int y)
 	return static_cast<int>((((-1) * (D + (A*x) + (B*y))) / C));
 }
 
+void transformGzCoord(GzCoord& vertex, const GzRender* render)
+{
+	float X_, Y_, Z_, W_;
+	X_ = vertex[0];
+	Y_ = vertex[1];
+	Z_ = vertex[2];
+	W_ = 1;
+
+	float xform[4];
+	float x1 = render->Ximage[render->matlevel][0][0];
+	float x2 = render->Ximage[render->matlevel][1][0];
+	float x3 = render->Ximage[render->matlevel][2][0];
+	float x4 = render->Ximage[render->matlevel][3][0];
+	float y1 = render->Ximage[render->matlevel][0][1];
+	float y2 = render->Ximage[render->matlevel][1][1];
+	float y3 = render->Ximage[render->matlevel][2][1];
+	float y4 = render->Ximage[render->matlevel][3][1];
+	float z1 = render->Ximage[render->matlevel][0][2];
+	float z2 = render->Ximage[render->matlevel][1][2];
+	float z3 = render->Ximage[render->matlevel][2][2];
+	float z4 = render->Ximage[render->matlevel][3][2];
+	float w1 = render->Ximage[render->matlevel][0][3];
+	float w2 = render->Ximage[render->matlevel][1][3];
+	float w3 = render->Ximage[render->matlevel][2][3];
+	float w4 = render->Ximage[render->matlevel][3][3];
+
+	xform[0] = (x1 * X_) + (x2 * Y_) + (x3 * Z_) + (x4 * W_);
+	xform[1] = (y1 * X_) + (y2 * Y_) + (y3 * Z_) + (y4 * W_);
+	xform[2] = (z1 * X_) + (z2 * Y_) + (z3 * Z_) + (z4 * W_);
+	xform[3] = (w1 * X_) + (w2 * Y_) + (w3 * Z_) + (w4 * W_);
+
+	vertex[0] = xform[0];
+	vertex[1] = xform[1];
+	vertex[2] = xform[2];
+	vertex[3] = xform[3];
+}
+
 int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*valueList)
 /* numParts : how many names and values */
 {
@@ -401,6 +470,9 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 			equateGzCoord(vertexB, (static_cast<GzCoord*>(*valueList))[1]);
 			equateGzCoord(vertexC, (static_cast<GzCoord*>(*valueList))[2]);
 
+			transformGzCoord(vertexA, render);
+			transformGzCoord(vertexB, render);
+			transformGzCoord(vertexC, render);
 
 			//find the points of interest, in form of [topmost, left, right]
 			GzCoord vertices[3];

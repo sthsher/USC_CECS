@@ -92,7 +92,7 @@ GzMatrix	rotateY =
  
 	status |= GzNewRender(&m_pRender, m_pDisplay); 
 
-#if 1 	/* set up app-defined camera if desired, else use camera defaults */
+#if 0 	/* set up app-defined camera if desired, else use camera defaults */
 	camera.position[X] = 13.2;      
   	camera.position[Y] = -8.7;
   	camera.position[Z] = -14.8;
