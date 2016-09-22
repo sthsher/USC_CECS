@@ -18,6 +18,8 @@
 
 /* NOT part of API - just for general assistance */
 
+void CalculateCamera(GzRender* render);
+
 short	ctoi(float color)		/* convert float color to GzIntensity short */
 {
 	return(short)((int)(color * ((1 << 12) - 1)));
@@ -82,6 +84,34 @@ void initializeXsp(GzMatrix* Xsp, const unsigned short xs, const unsigned short 
 
 //----------------------------------------------------------
 // Begin main functions
+#include <fstream>
+void printMatrix(GzMatrix matrix)
+{
+	std::ofstream console("console.txt", std::ios::app);
+
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			console << matrix[j][i] << " ";
+		}
+		console << std::endl;
+	}
+	console << std::endl;
+
+	console.close();
+}
+
+void clearMatrix(GzMatrix& matrix)
+{
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			matrix[i][j] = 0;
+		}
+	}
+}
 
 int GzNewRender(GzRender **render, GzDisplay *display)
 {
@@ -100,8 +130,13 @@ int GzNewRender(GzRender **render, GzDisplay *display)
 	unsigned short ys = display->yres;
 	initializeXsp(&((*render)->Xsp), display->xres, display->yres);
 
+	//initialize stack counter
+	(*render)->matlevel = 0;
+
 	//push this matrix onto the stack
 	GzPushMatrix(*render, (*render)->Xsp);
+
+	printMatrix((*render)->Xsp);
 
 	//initialize default camera
 	(*render)->camera.FOV = DEFAULT_FOV;
@@ -115,8 +150,8 @@ int GzNewRender(GzRender **render, GzDisplay *display)
 	(*render)->camera.worldup[Y] = 1;
 	(*render)->camera.worldup[Z] = 0;
 
-	//initialize stack counter
-	(*render)->matlevel = 0;
+	clearMatrix((*render)->camera.Xpi);
+	clearMatrix((*render)->camera.Xiw);
 
 	return GZ_SUCCESS;
 }
@@ -147,6 +182,7 @@ int GzBeginRender(GzRender *render)
 */ 
 	if (GzInitDisplay(render->display) == GZ_SUCCESS)
 	{
+		CalculateCamera(render);
 		return GZ_SUCCESS;
 	}
 	else
@@ -168,14 +204,24 @@ float calculateDotProduct(const float x1, const float y1, const float z1, const 
 	return (x1 * x2) + (y1 * y2) + (z1 * z2);
 }
 
-int GzPutCamera(GzRender *render, GzCamera *camera)
+void calculateCross(const float* m1, const float *m2, float* result)
 {
-	/*
-	- overwrite renderer camera structure with new camera definition
-	*/
+	result[X] = (m1[Y] * m2[Z]) - (m1[Z] * m2[Y]);
+	result[Y] = (m1[Z] * m2[X]) - (m1[X] * m2[Z]);
+	result[Z] = (m1[X] * m2[Y]) - (m1[Y] * m2[X]);
+}
+
+void CalculateCamera(GzRender* render)
+{
+	GzCamera* camera = &(render->camera);
 
 	//Has position, lookat, worldup, and FOV
 	//calculate Xiw and Xip
+
+	clearMatrix(camera->Xpi);
+	clearMatrix(camera->Xiw);
+
+	//initialize with 0's
 	(camera->Xpi)[0][0] = 1;
 	(camera->Xpi)[1][1] = 1;
 	(camera->Xpi)[3][3] = 1;
@@ -189,61 +235,159 @@ int GzPutCamera(GzRender *render, GzCamera *camera)
 	float z_axis[3], y_axis[3], x_axis[3];
 
 	//Zaxis = lookat point - origin / length
-	float cI_length = calculateDistance(camera->lookat[X], camera->lookat[Y], camera->lookat[Z], DEFAULT_IM_X, DEFAULT_IM_Y, DEFAULT_IM_Z);
-	z_axis[X] = static_cast<float>((camera->lookat[X] - DEFAULT_IM_X) / cI_length);
-	z_axis[Y] = static_cast<float>((camera->lookat[Y] - DEFAULT_IM_Y) / cI_length);
-	z_axis[Z] = static_cast<float>((camera->lookat[Z] - DEFAULT_IM_Z) / cI_length);
+	float cI_length = calculateDistance(camera->lookat[X], camera->lookat[Y], camera->lookat[Z], camera->position[X], camera->position[Y], camera->position[Z]);
+	z_axis[X] = static_cast<float>((camera->lookat[X] - camera->position[X]) / cI_length);
+	z_axis[Y] = static_cast<float>((camera->lookat[Y] - camera->position[Y]) / cI_length);
+	z_axis[Z] = static_cast<float>((camera->lookat[Z] - camera->position[Z]) / cI_length);
+
+	std::ofstream console("console.txt", std::ios::app);
+
+	float z_length = calculateDistance(z_axis[X], z_axis[Y], z_axis[Z], 0, 0, 0);
+
+	
+
+
+	/*
+	
+	calculateCross(camera->worldup, z_axis, x_axis);
+	float x_length = calculateDistance(x_axis[X], x_axis[Y], x_axis[Z], 0, 0, 0);
+
+	x_axis[X] = x_axis[X] / x_length;
+	x_axis[Y] = x_axis[Y] / x_length;
+	x_axis[Z] = x_axis[Z] / x_length;
+
+	console << "X dot Z: " << calculateDotProduct(x_axis[X], x_axis[Y], x_axis[Z], z_axis[X], z_axis[Y], z_axis[Z]) << std::endl;
+
+	calculateCross(z_axis, x_axis, y_axis);
+	float y_length = calculateDistance(y_axis[X], y_axis[Y], y_axis[Z], 0, 0, 0);
+
+	y_axis[X] = y_axis[X] / y_length;
+	y_axis[Y] = y_axis[Y] / y_length;
+	y_axis[Z] = y_axis[Z] / y_length;
+
+	*/
+
+
+
+
+
+	
 
 	//Yaxis
 	float up_[3];
 	float dot_product = calculateDotProduct(camera->worldup[X], camera->worldup[Y], camera->worldup[Z], z_axis[X], z_axis[Y], z_axis[Z]);
-	/*
-								[ up.x ] -		[ Z.x ]
-		up_ = up - (up.Z)Z =	[ up.y ] - up.Z [ Z.y ]
-								[ up.z ] -		[ Z.z ]
-	*/
+	
+	//							[ up.x ] -		[ Z.x ]
+	//	up_ = up - (up.Z)Z =	[ up.y ] - up.Z [ Z.y ]
+	//							[ up.z ] -		[ Z.z ]
+	
 
 	up_[X] = camera->worldup[X] - (dot_product * z_axis[X]);
 	up_[Y] = camera->worldup[Y] - (dot_product * z_axis[Y]);
 	up_[Z] = camera->worldup[Z] - (dot_product * z_axis[Z]);
-	float up_length = calculateDistance(up_[X], up_[Y], up_[Z], DEFAULT_IM_X, DEFAULT_IM_Y, DEFAULT_IM_Z);
+
+	float up_length = calculateDistance(up_[X], up_[Y], up_[Z], 0,0,0);
 
 	y_axis[X] = up_[X] / up_length;
 	y_axis[Y] = up_[Y] / up_length;
 	y_axis[Z] = up_[Z] / up_length;
 
+	float y_length = calculateDistance(y_axis[X], y_axis[Y], y_axis[Z], 0, 0, 0);
+
+
 	//Xaxis = Y x Z
-	x_axis[X] = (y_axis[Y] * z_axis[Z]) - (y_axis[Z] * z_axis[Y]);
-	x_axis[Y] = (y_axis[Z] * z_axis[X]) - (y_axis[X] * z_axis[Z]);
-	x_axis[Z] = (y_axis[X] * z_axis[Y]) - (y_axis[Y] * z_axis[X]);
+	calculateCross(y_axis, z_axis, x_axis);
+	float x_length = calculateDistance(x_axis[X], x_axis[Y], x_axis[Z], 0,0,0);
+
+	x_axis[X] = x_axis[X] / x_length;
+	x_axis[Y] = x_axis[Y] / x_length;
+	x_axis[Z] = x_axis[Z] / x_length;
+
+	x_length = calculateDistance(x_axis[X], x_axis[Y], x_axis[Z], 0, 0, 0);
+	
+
+
+
+
+
+
+	console << "X dot Y: " << calculateDotProduct(x_axis[X], x_axis[Y], x_axis[Z], y_axis[X], y_axis[Y], y_axis[Z]) << std::endl;
+	console << "Y dot Z: " << calculateDotProduct(y_axis[X], y_axis[Y], y_axis[Z], z_axis[X], z_axis[Y], z_axis[Z]) << std::endl;
+	console << "X dot Z: " << calculateDotProduct(x_axis[X], x_axis[Y], x_axis[Z], z_axis[X], z_axis[Y], z_axis[Z]) << std::endl;
+
+	console << "X length:" << calculateDistance(x_axis[X], x_axis[Y], x_axis[Z], 0, 0, 0) << std::endl;
+	console << "Y length:" << calculateDistance(y_axis[X], y_axis[Y], y_axis[Z], 0, 0, 0) << std::endl;
+	console << "Z length:" << calculateDistance(z_axis[X], z_axis[Y], z_axis[Z], 0, 0, 0) << std::endl;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	//build Xwi
-	float XC = calculateDotProduct(x_axis[X], x_axis[Y], x_axis[Z], DEFAULT_IM_X, DEFAULT_IM_Y, DEFAULT_IM_Z);
-	float YC = calculateDotProduct(y_axis[X], y_axis[Y], y_axis[Z], DEFAULT_IM_X, DEFAULT_IM_Y, DEFAULT_IM_Z);
-	float ZC = calculateDotProduct(z_axis[X], z_axis[Y], z_axis[Z], DEFAULT_IM_X, DEFAULT_IM_Y, DEFAULT_IM_Z);
+	float XC = calculateDotProduct(x_axis[X], x_axis[Y], x_axis[Z], camera->position[X], camera->position[Y], camera->position[Z]);
+
+	console << "XC: " << XC << std::endl;
+
+	float YC = calculateDotProduct(y_axis[X], y_axis[Y], y_axis[Z], camera->position[X], camera->position[Y], camera->position[Z]);
+
+	console << "YC: " << YC << std::endl;
+
+	float ZC = calculateDotProduct(z_axis[X], z_axis[Y], z_axis[Z], camera->position[X], camera->position[Y], camera->position[Z]);
+
+	console << "ZC: " << ZC << std::endl;
 
 	camera->Xiw[0][0] = x_axis[X];
-	camera->Xiw[0][1] = x_axis[Y];
-	camera->Xiw[0][2] = x_axis[Z];
-	camera->Xiw[0][3] = (-1) * XC;
-	camera->Xiw[1][0] = y_axis[X];
+	camera->Xiw[1][0] = x_axis[Y];
+	camera->Xiw[2][0] = x_axis[Z];
+	camera->Xiw[3][0] = (-1) * XC;
+	camera->Xiw[0][1] = y_axis[X];
 	camera->Xiw[1][1] = y_axis[Y];
-	camera->Xiw[1][2] = y_axis[Z];
-	camera->Xiw[1][3] = (-1) * YC;
-	camera->Xiw[2][0] = z_axis[X];
-	camera->Xiw[2][1] = z_axis[Y];
+	camera->Xiw[2][1] = y_axis[Z];
+	camera->Xiw[3][1] = (-1) * YC;
+	camera->Xiw[0][2] = z_axis[X];
+	camera->Xiw[1][2] = z_axis[Y];
 	camera->Xiw[2][2] = z_axis[Z];
-	camera->Xiw[2][3] = (-1) * ZC;
-	camera->Xiw[3][0] = 0;
-	camera->Xiw[3][1] = 0;
-	camera->Xiw[3][2] = 0;
+	camera->Xiw[3][2] = (-1) * ZC;
+	camera->Xiw[0][3] = 0;
+	camera->Xiw[1][3] = 0;
+	camera->Xiw[2][3] = 0;
 	camera->Xiw[3][3] = 1;
 
-	render->camera = *camera;
-
 	//push onto stack
-	GzPushMatrix(render, camera->Xpi);
-	GzPushMatrix(render, camera->Xiw);
+	GzPushMatrix(render, render->camera.Xpi);
+	GzPushMatrix(render, render->camera.Xiw);
+
+	printMatrix(render->camera.Xpi);
+	printMatrix(render->camera.Xiw);
+
+}
+
+int GzPutCamera(GzRender *render, GzCamera *camera)
+{
+	/*
+	- overwrite renderer camera structure with new camera definition
+	*/
+
+	render->camera.FOV = camera->FOV;
+	render->camera.lookat[X] = camera->lookat[X];
+	render->camera.lookat[Y] = camera->lookat[Y];
+	render->camera.lookat[Z] = camera->lookat[Z];
+	render->camera.position[X] = camera->position[X];
+	render->camera.position[Y] = camera->position[Y];
+	render->camera.position[Z] = camera->position[Z];
+	render->camera.worldup[X] = camera->worldup[X];
+	render->camera.worldup[Y] = camera->worldup[Y];
+	render->camera.worldup[Z] = camera->worldup[Z];
 
 	return GZ_SUCCESS;
 
@@ -276,8 +420,10 @@ int GzPushMatrix(GzRender *render, GzMatrix	matrix)
 			{
 				(render->Ximage[render->matlevel])[i][j] = matrix[i][j];
 			}
-		}	
+		}
+		++render->matlevel;
 	}
+
 
 	else
 	{
@@ -288,9 +434,9 @@ int GzPushMatrix(GzRender *render, GzMatrix	matrix)
 				float value = 0;
 				for (int x = 0; x < 4; ++x)
 				{
-					value += (render->Ximage[render->matlevel][x][j] * matrix[i][x]);
+					value += (render->Ximage[render->matlevel-1][x][j] * matrix[i][x]);
 				}
-				render->Ximage[render->matlevel + 1][i][j] = value;
+				render->Ximage[render->matlevel][i][j] = value;
 			}
 		}
 		++render->matlevel;
@@ -405,7 +551,7 @@ int interpolateZ(const GzCoord* vertices, const int x, const int y)
 	return static_cast<int>((((-1) * (D + (A*x) + (B*y))) / C));
 }
 
-void transformGzCoord(GzCoord& vertex, const GzRender* render)
+bool transformGzCoord(GzCoord& vertex, const GzRender* render)
 {
 	float X_, Y_, Z_, W_;
 	X_ = vertex[0];
@@ -414,32 +560,46 @@ void transformGzCoord(GzCoord& vertex, const GzRender* render)
 	W_ = 1;
 
 	float xform[4];
-	float x1 = render->Ximage[render->matlevel][0][0];
-	float x2 = render->Ximage[render->matlevel][1][0];
-	float x3 = render->Ximage[render->matlevel][2][0];
-	float x4 = render->Ximage[render->matlevel][3][0];
-	float y1 = render->Ximage[render->matlevel][0][1];
-	float y2 = render->Ximage[render->matlevel][1][1];
-	float y3 = render->Ximage[render->matlevel][2][1];
-	float y4 = render->Ximage[render->matlevel][3][1];
-	float z1 = render->Ximage[render->matlevel][0][2];
-	float z2 = render->Ximage[render->matlevel][1][2];
-	float z3 = render->Ximage[render->matlevel][2][2];
-	float z4 = render->Ximage[render->matlevel][3][2];
-	float w1 = render->Ximage[render->matlevel][0][3];
-	float w2 = render->Ximage[render->matlevel][1][3];
-	float w3 = render->Ximage[render->matlevel][2][3];
-	float w4 = render->Ximage[render->matlevel][3][3];
+	float x1 = render->Ximage[render->matlevel - 1][0][0];
+	float x2 = render->Ximage[render->matlevel - 1][1][0];
+	float x3 = render->Ximage[render->matlevel - 1][2][0];
+	float x4 = render->Ximage[render->matlevel - 1][3][0];
+	float y1 = render->Ximage[render->matlevel - 1][0][1];
+	float y2 = render->Ximage[render->matlevel - 1][1][1];
+	float y3 = render->Ximage[render->matlevel - 1][2][1];
+	float y4 = render->Ximage[render->matlevel - 1][3][1];
+	float z1 = render->Ximage[render->matlevel - 1][0][2];
+	float z2 = render->Ximage[render->matlevel - 1][1][2];
+	float z3 = render->Ximage[render->matlevel - 1][2][2];
+	float z4 = render->Ximage[render->matlevel - 1][3][2];
+	float w1 = render->Ximage[render->matlevel - 1][0][3];
+	float w2 = render->Ximage[render->matlevel - 1][1][3];
+	float w3 = render->Ximage[render->matlevel - 1][2][3];
+	float w4 = render->Ximage[render->matlevel - 1][3][3];
+
+	std::ofstream console("console.txt", std::ios::app);
+	
+	console << "Top of stack: " << std::endl;
+	console << x1 << " " << x2 << " " << x3 << " " << x4 << std::endl;
+	console << y1 << " " << y2 << " " << y3 << " " << y4 << std::endl;
+	console << z1 << " " << z2 << " " << z3 << " " << z4 << std::endl;
+	console << w1 << " " << w2 << " " << w3 << " " << w4 << std::endl;
+
+	console << std::endl << "Vertex: " << std::endl;
+	console << X_ << std::endl << Y_ << std::endl << Z_ << std::endl << W_ << std::endl;
+
+	if (xform[2] < 0) return false;
 
 	xform[0] = (x1 * X_) + (x2 * Y_) + (x3 * Z_) + (x4 * W_);
 	xform[1] = (y1 * X_) + (y2 * Y_) + (y3 * Z_) + (y4 * W_);
 	xform[2] = (z1 * X_) + (z2 * Y_) + (z3 * Z_) + (z4 * W_);
 	xform[3] = (w1 * X_) + (w2 * Y_) + (w3 * Z_) + (w4 * W_);
 
-	vertex[0] = xform[0];
-	vertex[1] = xform[1];
-	vertex[2] = xform[2];
-	vertex[3] = xform[3];
+	vertex[0] = xform[0] / xform[3];
+	vertex[1] = xform[1] / xform[3];
+	vertex[2] = xform[2] / xform[3];
+
+	return true;
 }
 
 int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*valueList)
@@ -453,6 +613,7 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
        - optional: test for triangles with all three verts off-screen (trivial frustum cull)
 - invoke triangle rasterizer  
 */ 
+
 	for (int p = 0; p < numParts; ++p)
 	{
 		if (*nameList == GZ_NULL_TOKEN)
@@ -470,9 +631,9 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 			equateGzCoord(vertexB, (static_cast<GzCoord*>(*valueList))[1]);
 			equateGzCoord(vertexC, (static_cast<GzCoord*>(*valueList))[2]);
 
-			transformGzCoord(vertexA, render);
-			transformGzCoord(vertexB, render);
-			transformGzCoord(vertexC, render);
+			if (!transformGzCoord(vertexA, render)) return GZ_FAILURE;
+			if (!transformGzCoord(vertexB, render)) return GZ_FAILURE;
+			if (!transformGzCoord(vertexC, render)) return GZ_FAILURE;
 
 			//find the points of interest, in form of [topmost, left, right]
 			GzCoord vertices[3];

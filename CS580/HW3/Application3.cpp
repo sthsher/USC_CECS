@@ -38,6 +38,7 @@ Application3::~Application3()
 	Clean();
 }
 
+#include <fstream>
 int Application3::Initialize()
 {
 	GzCamera	camera;  /* the app can set camera params */
@@ -113,16 +114,36 @@ GzMatrix	rotateY =
 	/* Start Renderer */
 	status |= GzBeginRender(m_pRender);
 
+
 	/* Push model matricies */
 	status |= GzPushMatrix(m_pRender, scale);  
 	status |= GzPushMatrix(m_pRender, rotateY); 
 	status |= GzPushMatrix(m_pRender, rotateX);
+
+	std::ofstream console("console.txt", std::ios::app);
+	console << "Stack: " << std::endl;
+	console << "Matlevel: " << m_pRender->matlevel << std::endl;
+
+	for (int i = 0; i < m_pRender->matlevel; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			for (int k = 0; k < 4; ++k)
+			{
+				console << m_pRender->Ximage[i][k][j] << " ";
+			}
+			console << std::endl;
+		}
+		console << std::endl;
+	}
 
 	if (status) 
 		return(GZ_FAILURE); 
 	else 
 		return(GZ_SUCCESS); 
 }
+
+#include <fstream>
 
 int Application3::Render() 
 {
