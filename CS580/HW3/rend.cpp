@@ -15,10 +15,52 @@
 #define BOT 2
 
 #define PI 3.14159265358979
+#define	RADIANS(d)	((d * PI)/180)	
 
 /* NOT part of API - just for general assistance */
 
 void CalculateCamera(GzRender* render);
+
+#include <fstream>
+
+void printMatrix(GzMatrix matrix)
+{
+	std::ofstream console("console.txt", std::ios::app);
+
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			console << matrix[j][i] << " ";
+		}
+		console << std::endl;
+	}
+	console << std::endl;
+
+	console.close();
+}
+
+void transposeMatrix(const GzMatrix matrix, GzMatrix& transposed)
+{
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			transposed[i][j] = matrix[j][i];
+		}
+	}
+}
+
+void equateMatrix(GzMatrix LHS, const GzMatrix RHS)
+{
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			LHS[i][j] = RHS[i][j];
+		}
+	}
+}
 
 short	ctoi(float color)		/* convert float color to GzIntensity short */
 {
@@ -30,6 +72,18 @@ int GzRotXMat(float degree, GzMatrix mat)
 // Create rotate matrix : rotate along x axis
 // Pass back the matrix using mat value
 
+	float sin = static_cast<float>(std::sin(RADIANS(degree)));
+	float cos = static_cast<float>(std::cos(RADIANS(degree)));
+
+	mat[1][1] = cos;
+	mat[2][1] = (-1) * sin;
+	mat[1][2] = sin;
+	mat[2][2] = cos;
+
+	GzMatrix transposed;
+	transposeMatrix(mat, transposed);
+	equateMatrix(mat, transposed);
+
 	return GZ_SUCCESS;
 }
 
@@ -38,6 +92,18 @@ int GzRotYMat(float degree, GzMatrix mat)
 {
 // Create rotate matrix : rotate along y axis
 // Pass back the matrix using mat value
+
+	float sin = static_cast<float>(std::sin(RADIANS(degree)));
+	float cos = static_cast<float>(std::cos(RADIANS(degree)));
+
+	mat[0][0] = cos;
+	mat[2][0] = sin;
+	mat[0][2] = (-1) * sin;
+	mat[2][2] = cos;
+
+	GzMatrix transposed;
+	transposeMatrix(mat, transposed);
+	equateMatrix(mat, transposed);
 
 	return GZ_SUCCESS;
 }
@@ -48,6 +114,18 @@ int GzRotZMat(float degree, GzMatrix mat)
 // Create rotate matrix : rotate along z axis
 // Pass back the matrix using mat value
 
+	float sin = static_cast<float>(std::sin(RADIANS(degree)));
+	float cos = static_cast<float>(std::cos(RADIANS(degree)));
+
+	mat[0][0] = cos;
+	mat[0][1] = sin;
+	mat[1][0] = (-1) * sin;
+	mat[1][1] = cos;
+
+	GzMatrix transposed;
+	transposeMatrix(mat, transposed);
+	equateMatrix(mat, transposed);
+
 	return GZ_SUCCESS;
 }
 
@@ -57,6 +135,14 @@ int GzTrxMat(GzCoord translate, GzMatrix mat)
 // Create translation matrix
 // Pass back the matrix using mat value
 
+	mat[3][0] = translate[X];
+	mat[3][1] = translate[Y];
+	mat[3][2] = translate[Z];
+
+	GzMatrix transposed;
+	transposeMatrix(mat, transposed);
+	equateMatrix(mat, transposed);
+
 	return GZ_SUCCESS;
 }
 
@@ -65,6 +151,14 @@ int GzScaleMat(GzCoord scale, GzMatrix mat)
 {
 // Create scaling matrix
 // Pass back the matrix using mat value
+
+	mat[0][0] = scale[X];
+	mat[1][1] = scale[Y];
+	mat[2][2] = scale[Z];
+
+	GzMatrix transposed;
+	transposeMatrix(mat, transposed);
+	equateMatrix(mat, transposed);
 
 	return GZ_SUCCESS;
 }
@@ -84,23 +178,7 @@ void initializeXsp(GzMatrix* Xsp, const unsigned short xs, const unsigned short 
 
 //----------------------------------------------------------
 // Begin main functions
-#include <fstream>
-void printMatrix(GzMatrix matrix)
-{
-	std::ofstream console("console.txt", std::ios::app);
 
-	for (int i = 0; i < 4; ++i)
-	{
-		for (int j = 0; j < 4; ++j)
-		{
-			console << matrix[j][i] << " ";
-		}
-		console << std::endl;
-	}
-	console << std::endl;
-
-	console.close();
-}
 
 void clearMatrix(GzMatrix& matrix)
 {
@@ -134,9 +212,9 @@ int GzNewRender(GzRender **render, GzDisplay *display)
 	(*render)->matlevel = 0;
 
 	//push this matrix onto the stack
-	GzPushMatrix(*render, (*render)->Xsp);
-
-	printMatrix((*render)->Xsp);
+	GzMatrix transpose;
+	transposeMatrix((*render)->Xsp, transpose);
+	GzPushMatrix(*render, transpose);
 
 	//initialize default camera
 	(*render)->camera.FOV = DEFAULT_FOV;
@@ -240,8 +318,6 @@ void CalculateCamera(GzRender* render)
 	z_axis[Y] = static_cast<float>((camera->lookat[Y] - camera->position[Y]) / cI_length);
 	z_axis[Z] = static_cast<float>((camera->lookat[Z] - camera->position[Z]) / cI_length);
 
-	std::ofstream console("console.txt", std::ios::app);
-
 	float z_length = calculateDistance(z_axis[X], z_axis[Y], z_axis[Z], 0, 0, 0);
 
 	
@@ -308,43 +384,10 @@ void CalculateCamera(GzRender* render)
 
 
 
-
-
-
-	console << "X dot Y: " << calculateDotProduct(x_axis[X], x_axis[Y], x_axis[Z], y_axis[X], y_axis[Y], y_axis[Z]) << std::endl;
-	console << "Y dot Z: " << calculateDotProduct(y_axis[X], y_axis[Y], y_axis[Z], z_axis[X], z_axis[Y], z_axis[Z]) << std::endl;
-	console << "X dot Z: " << calculateDotProduct(x_axis[X], x_axis[Y], x_axis[Z], z_axis[X], z_axis[Y], z_axis[Z]) << std::endl;
-
-	console << "X length:" << calculateDistance(x_axis[X], x_axis[Y], x_axis[Z], 0, 0, 0) << std::endl;
-	console << "Y length:" << calculateDistance(y_axis[X], y_axis[Y], y_axis[Z], 0, 0, 0) << std::endl;
-	console << "Z length:" << calculateDistance(z_axis[X], z_axis[Y], z_axis[Z], 0, 0, 0) << std::endl;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	//build Xwi
 	float XC = calculateDotProduct(x_axis[X], x_axis[Y], x_axis[Z], camera->position[X], camera->position[Y], camera->position[Z]);
-
-	console << "XC: " << XC << std::endl;
-
 	float YC = calculateDotProduct(y_axis[X], y_axis[Y], y_axis[Z], camera->position[X], camera->position[Y], camera->position[Z]);
-
-	console << "YC: " << YC << std::endl;
-
 	float ZC = calculateDotProduct(z_axis[X], z_axis[Y], z_axis[Z], camera->position[X], camera->position[Y], camera->position[Z]);
-
-	console << "ZC: " << ZC << std::endl;
 
 	camera->Xiw[0][0] = x_axis[X];
 	camera->Xiw[1][0] = x_axis[Y];
@@ -364,11 +407,12 @@ void CalculateCamera(GzRender* render)
 	camera->Xiw[3][3] = 1;
 
 	//push onto stack
-	GzPushMatrix(render, render->camera.Xpi);
-	GzPushMatrix(render, render->camera.Xiw);
+	GzMatrix XpiTranspose, XiwTranspose;
+	transposeMatrix(render->camera.Xpi, XpiTranspose);
+	transposeMatrix(render->camera.Xiw, XiwTranspose);
 
-	printMatrix(render->camera.Xpi);
-	printMatrix(render->camera.Xiw);
+	GzPushMatrix(render, XpiTranspose);
+	GzPushMatrix(render, XiwTranspose);
 
 }
 
@@ -399,6 +443,11 @@ int GzPushMatrix(GzRender *render, GzMatrix	matrix)
 - push a matrix onto the Ximage stack
 - check for stack overflow
 */
+	//transpose the matrix first
+	GzMatrix transposed;
+	transposeMatrix(matrix, transposed);
+	
+
 	if (render->matlevel == MATLEVELS - 1)
 	{
 		return GZ_FAILURE;
@@ -418,7 +467,7 @@ int GzPushMatrix(GzRender *render, GzMatrix	matrix)
 		{
 			for (int j = 0; j < 4; ++j)
 			{
-				(render->Ximage[render->matlevel])[i][j] = matrix[i][j];
+				(render->Ximage[render->matlevel])[i][j] = transposed[i][j];
 			}
 		}
 		++render->matlevel;
@@ -434,7 +483,7 @@ int GzPushMatrix(GzRender *render, GzMatrix	matrix)
 				float value = 0;
 				for (int x = 0; x < 4; ++x)
 				{
-					value += (render->Ximage[render->matlevel-1][x][j] * matrix[i][x]);
+					value += (render->Ximage[render->matlevel-1][x][j] * transposed[i][x]);
 				}
 				render->Ximage[render->matlevel][i][j] = value;
 			}
@@ -576,17 +625,6 @@ bool transformGzCoord(GzCoord& vertex, const GzRender* render)
 	float w2 = render->Ximage[render->matlevel - 1][1][3];
 	float w3 = render->Ximage[render->matlevel - 1][2][3];
 	float w4 = render->Ximage[render->matlevel - 1][3][3];
-
-	std::ofstream console("console.txt", std::ios::app);
-	
-	console << "Top of stack: " << std::endl;
-	console << x1 << " " << x2 << " " << x3 << " " << x4 << std::endl;
-	console << y1 << " " << y2 << " " << y3 << " " << y4 << std::endl;
-	console << z1 << " " << z2 << " " << z3 << " " << z4 << std::endl;
-	console << w1 << " " << w2 << " " << w3 << " " << w4 << std::endl;
-
-	console << std::endl << "Vertex: " << std::endl;
-	console << X_ << std::endl << Y_ << std::endl << Z_ << std::endl << W_ << std::endl;
 
 	if (xform[2] < 0) return false;
 
@@ -748,12 +786,12 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 			//Case 1:
 			//Left is lower than right
 			/*
-			TOP
+							TOP
 
-			RIGHT
+										RIGHT
 
 
-			LEFT
+					LEFT
 			*/
 			else if (vertices[LEFT][Y] > vertices[RIGHT][Y])
 			{
@@ -829,12 +867,12 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 			//Case 2:
 			//Left is higher than right
 			/*
-			TOP
+								TOP
 
 
-			LEFT
+						LEFT
 
-			RIGHT
+											RIGHT
 			*/
 			else if (vertices[LEFT][Y] < vertices[RIGHT][Y])
 			{
@@ -910,10 +948,10 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 			//Case 3:
 			//Left is same height as right
 			/*
-			TOP
+								TOP
 
 
-			LEFT			RIGHT
+						LEFT			RIGHT
 			*/
 			else
 			{

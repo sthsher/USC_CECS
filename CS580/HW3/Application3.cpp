@@ -19,7 +19,7 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
-#define INFILE3  "tri.asc"
+#define INFILE3  "pot4.asc"
 #define OUTFILE3 "output.ppm"
 
 void shade(GzCoord norm, GzCoord color);
@@ -38,7 +38,6 @@ Application3::~Application3()
 	Clean();
 }
 
-#include <fstream>
 int Application3::Initialize()
 {
 	GzCamera	camera;  /* the app can set camera params */
@@ -93,7 +92,7 @@ GzMatrix	rotateY =
  
 	status |= GzNewRender(&m_pRender, m_pDisplay); 
 
-#if 0 	/* set up app-defined camera if desired, else use camera defaults */
+#if 1 	/* set up app-defined camera if desired, else use camera defaults */
 	camera.position[X] = 13.2;      
   	camera.position[Y] = -8.7;
   	camera.position[Z] = -14.8;
@@ -119,23 +118,6 @@ GzMatrix	rotateY =
 	status |= GzPushMatrix(m_pRender, scale);  
 	status |= GzPushMatrix(m_pRender, rotateY); 
 	status |= GzPushMatrix(m_pRender, rotateX);
-
-	std::ofstream console("console.txt", std::ios::app);
-	console << "Stack: " << std::endl;
-	console << "Matlevel: " << m_pRender->matlevel << std::endl;
-
-	for (int i = 0; i < m_pRender->matlevel; ++i)
-	{
-		for (int j = 0; j < 4; ++j)
-		{
-			for (int k = 0; k < 4; ++k)
-			{
-				console << m_pRender->Ximage[i][k][j] << " ";
-			}
-			console << std::endl;
-		}
-		console << std::endl;
-	}
 
 	if (status) 
 		return(GZ_FAILURE); 
