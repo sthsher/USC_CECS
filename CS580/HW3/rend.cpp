@@ -234,7 +234,6 @@ int GzNewRender(GzRender **render, GzDisplay *display)
 	return GZ_SUCCESS;
 }
 
-
 int GzFreeRender(GzRender *render)
 {
 /* 
@@ -320,9 +319,6 @@ void CalculateCamera(GzRender* render)
 
 	float z_length = calculateDistance(z_axis[X], z_axis[Y], z_axis[Z], 0, 0, 0);
 
-	
-
-
 	/*
 	
 	calculateCross(camera->worldup, z_axis, x_axis);
@@ -342,12 +338,6 @@ void CalculateCamera(GzRender* render)
 	y_axis[Z] = y_axis[Z] / y_length;
 
 	*/
-
-
-
-
-
-	
 
 	//Yaxis
 	float up_[3];
@@ -380,9 +370,6 @@ void CalculateCamera(GzRender* render)
 	x_axis[Z] = x_axis[Z] / x_length;
 
 	x_length = calculateDistance(x_axis[X], x_axis[Y], x_axis[Z], 0, 0, 0);
-	
-
-
 
 	//build Xwi
 	float XC = calculateDotProduct(x_axis[X], x_axis[Y], x_axis[Z], camera->position[X], camera->position[Y], camera->position[Z]);
@@ -453,14 +440,6 @@ int GzPushMatrix(GzRender *render, GzMatrix	matrix)
 		return GZ_FAILURE;
 	}
 
-	//for (int i = 0; i < 4; ++i)
-	//{
-	//	for (int j = 0; j < 4; ++j)
-	//	{
-	//		(render->Ximage[render->matlevel])[i][j] = matrix[i][j];
-	//	}
-	//}
-
 	if (render->matlevel == 0)
 	{
 		for (int i = 0; i < 4; ++i)
@@ -472,7 +451,6 @@ int GzPushMatrix(GzRender *render, GzMatrix	matrix)
 		}
 		++render->matlevel;
 	}
-
 
 	else
 	{
@@ -711,12 +689,6 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				//A & B
 				vertexA[X] <= vertexB[X] ? equateGzCoord(vertices[LEFT], vertexA) : equateGzCoord(vertices[LEFT], vertexB);
 				vertexA[X] <= vertexB[X] ? equateGzCoord(vertices[RIGHT], vertexB) : equateGzCoord(vertices[RIGHT], vertexA);
-			}
-
-			//Doesn't seem to happen
-			if (vertices[TOP][Y] == vertices[LEFT][Y] || vertices[TOP][Y] == vertices[RIGHT][Y] || vertices[LEFT][Y] == vertices[RIGHT][Y])
-			{
-				//console << "Special case\n";
 			}
 
 			//Special Cases:
