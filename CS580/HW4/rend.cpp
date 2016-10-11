@@ -15,12 +15,26 @@
 #define SIDE 1
 #define BOT 2
 
+#define DEBUG true
+
+static const GzMatrix IDENTITY =
+{
+	1.0,	0.0,	0.0,	0.0,
+	0.0,	1.0,	0.0,	0.0,
+	0.0,	0.0,	1.0,	0.0,
+	0.0,	0.0,	0.0,	1.0
+};
+
+short normlevel;
+
 #define PI 3.14159265358979
 #define	RADIANS(d)	((d * PI)/180)	
 
 /* NOT part of API - just for general assistance */
 
 void CalculateCamera(GzRender* render);
+int GzPushMatrixXnorm(GzRender *render, const GzMatrix matrix);
+int GzPopMatrixXnorm();
 
 #include <fstream>
 
@@ -56,7 +70,7 @@ void printColor(GzColor c)
 	console << std::endl;
 }
 
-void printMatrix(GzMatrix matrix)
+void printMatrix(const GzMatrix matrix)
 {
 	std::ofstream console("console.txt", std::ios::app);
 
@@ -140,7 +154,6 @@ int GzRotYMat(float degree, GzMatrix mat)
 
 	return GZ_SUCCESS;
 }
-
 
 int GzRotZMat(float degree, GzMatrix mat)
 {
@@ -243,11 +256,15 @@ int GzNewRender(GzRender **render, GzDisplay *display)
 
 	//initialize stack counter
 	(*render)->matlevel = 0;
+	normlevel = 0;
 
 	//push this matrix onto the stack
 	GzMatrix transpose;
 	transposeMatrix((*render)->Xsp, transpose);
 	GzPushMatrix(*render, transpose);
+
+	//push Norm
+	//GzPushMatrixXnorm(*render, IDENTITY_T);
 
 	//initialize default camera
 	(*render)->camera.FOV = DEFAULT_FOV;
@@ -437,6 +454,39 @@ void CalculateCamera(GzRender* render)
 	GzPushMatrix(render, XpiTranspose);
 	GzPushMatrix(render, XiwTranspose);
 
+
+	/*
+	//push Xpi Norm
+	GzPushMatrixXnorm(render, IDENTITY_T);
+
+	//push Xiw
+	GzMatrix normIW;
+	equateMatrix(normIW, render->camera.Xiw);
+	
+	//clear transpose
+	normIW[3][0] = 0;
+	normIW[3][1] = 0;
+	normIW[3][2] = 0;
+
+	//unitary
+	float K = sqrt(pow(normIW[0][0], 2) + pow(normIW[1][0], 2) + pow(normIW[2][0], 2));
+	for (int i = 0; i < 3; ++i)
+	{
+		for (int j = 0; j < 3; ++j)
+		{
+			normIW[i][j] = normIW[i][j] / K;
+		}
+	}
+
+	if (DEBUG) printString("normIW");
+	if (DEBUG) printMatrix(normIW);
+
+	//push to stack
+	GzMatrix normIWTranspose;
+	transposeMatrix(normIW, normIWTranspose);
+	GzPushMatrixXnorm(render, normIWTranspose);
+
+	*/
 }
 
 int GzPutCamera(GzRender *render, GzCamera *camera)
@@ -460,6 +510,77 @@ int GzPutCamera(GzRender *render, GzCamera *camera)
 
 }
 
+/*
+//matrix has to be transposed
+int GzPushMatrixXnorm(GzRender *render, const GzMatrix matrix)
+{
+	
+	//- push a matrix onto the Xnorm stack
+	//- check for stack overflow
+	
+	//transpose the matrix first
+	//Get the norm matrix
+	GzMatrix transposed;
+	transposeMatrix(matrix, transposed);
+
+	if (normlevel == MATLEVELS - 1)
+	{
+		return GZ_FAILURE;
+	}
+
+	if (normlevel == 0)
+	{
+		for (int i = 0; i < 4; ++i)
+		{
+			for (int j = 0; j < 4; ++j)
+			{
+				(render->Xnorm[normlevel])[i][j] = transposed[i][j];
+			}
+		}
+		++normlevel;
+	}
+
+	else
+	{
+		for (int i = 0; i < 4; ++i)
+		{
+			for (int j = 0; j < 4; ++j)
+			{
+				float value = 0;
+				for (int x = 0; x < 4; ++x)
+				{
+					value += (render->Xnorm[normlevel - 1][x][j] * transposed[i][x]);
+				}
+				render->Xnorm[normlevel][i][j] = value;
+			}
+		}
+		++normlevel;
+	}
+
+	return GZ_SUCCESS;
+}
+
+int GzPopMatrixXnorm()
+{
+	
+	//- pop a matrix off the Ximage stack
+	//- check for stack underflow
+	
+
+	if (normlevel == 0)
+	{
+		return GZ_FAILURE;
+	}
+
+	--normlevel;
+
+	return GZ_SUCCESS;
+
+}
+
+*/
+
+//matrix has to be transposed
 int GzPushMatrix(GzRender *render, GzMatrix	matrix)
 {
 /*
@@ -470,6 +591,34 @@ int GzPushMatrix(GzRender *render, GzMatrix	matrix)
 	GzMatrix transposed;
 	transposeMatrix(matrix, transposed);
 	
+	GzMatrix normMat;
+	equateMatrix(normMat, transposed);
+
+	if (normMat[2][2] == MAXINT || normMat[2][3] != 0)
+	{
+		equateMatrix(normMat, IDENTITY);
+	}
+	else
+	{
+		//rid transpose and turn unitary
+		//clear transpose
+		normMat[3][0] = 0;
+		normMat[3][1] = 0;
+		normMat[3][2] = 0;
+
+		//unitary
+		float K = sqrt(pow(normMat[0][0], 2) + pow(normMat[1][0], 2) + pow(normMat[2][0], 2));
+		for (int i = 0; i < 3; ++i)
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				normMat[i][j] = normMat[i][j] / K;
+			}
+		}
+	}
+
+	if (DEBUG) printString("Pushing to XNorm");
+	if (DEBUG) printMatrix(normMat);
 
 	if (render->matlevel == MATLEVELS - 1)
 	{
@@ -483,6 +632,7 @@ int GzPushMatrix(GzRender *render, GzMatrix	matrix)
 			for (int j = 0; j < 4; ++j)
 			{
 				(render->Ximage[render->matlevel])[i][j] = transposed[i][j];
+				(render->Xnorm[render->matlevel])[i][j] = normMat[i][j];
 			}
 		}
 		++render->matlevel;
@@ -494,16 +644,22 @@ int GzPushMatrix(GzRender *render, GzMatrix	matrix)
 		{
 			for (int j = 0; j < 4; ++j)
 			{
-				float value = 0;
+				float valueImage = 0;
+				float valueNormal = 0;
 				for (int x = 0; x < 4; ++x)
 				{
-					value += (render->Ximage[render->matlevel-1][x][j] * transposed[i][x]);
+					valueImage += (render->Ximage[render->matlevel - 1][x][j] * transposed[i][x]);
+					valueNormal += (render->Xnorm[render->matlevel - 1][x][j] * normMat[i][x]);
 				}
-				render->Ximage[render->matlevel][i][j] = value;
+				render->Ximage[render->matlevel][i][j] = valueImage;
+				render->Xnorm[render->matlevel][i][j] = valueNormal;
 			}
 		}
 		++render->matlevel;
 	}
+
+	if (DEBUG) printString("Top of Xnorm");
+	if (DEBUG) printMatrix(render->Xnorm[render->matlevel - 1]);
 
 	return GZ_SUCCESS;
 }
@@ -554,47 +710,72 @@ int GzPutAttribute(GzRender	*render, int numAttributes, GzToken	*nameList,
 				//add to renderer
 				render->lights[render->numlights++] = newLight;
 
-				printString("DIRECTIONAL LIGHT\n");
-				printString("Direction: ");
-				printCoord(render->lights[render->numlights-1].direction);
-				printString("Color:     ");
-				printColor(render->lights[render->numlights-1].color);
-				printString("\n");
+				if (DEBUG) printString("DIRECTIONAL LIGHT");
+				if (DEBUG) printString("Direction: ");
+				if (DEBUG) printCoord(render->lights[render->numlights-1].direction);
+				if (DEBUG) printString("Color:     ");
+				if (DEBUG) printColor(render->lights[render->numlights-1].color);
+				if (DEBUG) printString("\n");
 				break;
 			}
 			case GZ_AMBIENT_LIGHT:
 			{
 				render->ambientlight = *(static_cast<GzLight*>(valueList[i]));
+				if (DEBUG) printString("Ambient Light");
+				if (DEBUG) printString("Direction: ");
+				if (DEBUG) printCoord(render->lights[render->numlights - 1].direction);
+				if (DEBUG) printString("Color:     ");
+				if (DEBUG) printColor(render->lights[render->numlights - 1].color);
+				if (DEBUG) printString("\n");				
 				break;
 			}
 			case GZ_DIFFUSE_COEFFICIENT:
 			{
+				render->Kd[RED] = (*static_cast<GzColor*>(valueList[i]))[RED];
+				render->Kd[GREEN] = (*static_cast<GzColor*>(valueList[i]))[GREEN];
+				render->Kd[BLUE] = (*static_cast<GzColor*>(valueList[i]))[BLUE];
+
+				if (DEBUG) printString("Diffuse Coefficient Kd:");
+				if (DEBUG) printCoord(render->Kd);
+				if (DEBUG) printString("\n");
+
 				break;
 			}
 			case GZ_AMBIENT_COEFFICIENT:
 			{
+				render->Ka[RED] = (*static_cast<GzColor*>(valueList[i]))[RED];
+				render->Ka[GREEN] = (*static_cast<GzColor*>(valueList[i]))[GREEN];
+				render->Ka[BLUE] = (*static_cast<GzColor*>(valueList[i]))[BLUE];
+
+				if (DEBUG) printString("Ambient Coefficient Ka:");
+				if (DEBUG) printCoord(render->Ka);
+				if (DEBUG) printString("\n");
+
 				break;
 			}
 			case GZ_SPECULAR_COEFFICIENT:
 			{
+				render->Ks[RED] = (*static_cast<GzColor*>(valueList[i]))[RED];
+				render->Ks[GREEN] = (*static_cast<GzColor*>(valueList[i]))[GREEN];
+				render->Ks[BLUE] = (*static_cast<GzColor*>(valueList[i]))[BLUE];
+
+				if (DEBUG) printString("Specular Coefficient Ks:");
+				if (DEBUG) printCoord(render->Ks);
+				if (DEBUG) printString("\n");
+
 				break;
 			}
 			case GZ_DISTRIBUTION_COEFFICIENT:
 			{
+				render->spec = (*static_cast<float*>(valueList[i]));
+
+				if (DEBUG) printString("Distribution Coefficient SPEC:");
+				if (DEBUG) printString( std::to_string(render->spec));
+				if (DEBUG) printString("\n");
+
 				break;
 			}
 		}
-		//if (*nameList == GZ_RGB_COLOR)
-		//{
-		//	render->flatcolor[RED] = (*static_cast<GzColor*>(*valueList))[RED];
-		//	render->flatcolor[GREEN] = (*static_cast<GzColor*>(*valueList))[GREEN];
-		//	render->flatcolor[BLUE] = (*static_cast<GzColor*>(*valueList))[BLUE];
-		//}
-
-		//iterate GzToken
-		//static_cast<int*>(nameList) += 1;
-		//iterate GzPointer
-		//valueList += sizeof(GzToken);
 	}
 
 	return GZ_SUCCESS;
@@ -712,6 +893,15 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 - invoke triangle rasterizer  
 */ 
 
+	//three vertices
+	GzCoord vertexA;
+	GzCoord vertexB;
+	GzCoord vertexC;
+
+	GzCoord normalA;
+	GzCoord normalB;
+	GzCoord normalC;
+
 	for (int p = 0; p < numParts; ++p)
 	{
 		switch (*nameList)
@@ -723,340 +913,412 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 			}
 			case GZ_NORMAL:
 			{
+				//get the 3 normals
+				equateGzCoord(normalA, (static_cast<GzCoord*>(*valueList))[0]);
+				equateGzCoord(normalB, (static_cast<GzCoord*>(*valueList))[1]);
+				equateGzCoord(normalC, (static_cast<GzCoord*>(*valueList))[2]);
 
 				break;
 			}
 			case GZ_POSITION:
 			{
 				//get the 3 vertices
-				GzCoord vertexA;
-				GzCoord vertexB;
-				GzCoord vertexC;
-
 				equateGzCoord(vertexA, (static_cast<GzCoord*>(*valueList))[0]);
 				equateGzCoord(vertexB, (static_cast<GzCoord*>(*valueList))[1]);
 				equateGzCoord(vertexC, (static_cast<GzCoord*>(*valueList))[2]);
 
+				//transform and clip
 				if (!transformGzCoord(vertexA, render)) return GZ_FAILURE;
 				if (!transformGzCoord(vertexB, render)) return GZ_FAILURE;
 				if (!transformGzCoord(vertexC, render)) return GZ_FAILURE;
 
-				//find the points of interest, in form of [topmost, left, right]
-				GzCoord vertices[3];
-
-				//Case A
-				if (vertexA[Y] < vertexB[Y] && vertexA[Y] < vertexC[Y])
-				{
-					equateGzCoord(vertices[TOP], vertexA);
-				}
-				//Case B
-				else if (vertexB[Y] < vertexA[Y] && vertexB[Y] < vertexC[Y])
-				{
-					equateGzCoord(vertices[TOP], vertexB);
-				}
-
-				//Case C
-				else
-				{
-					equateGzCoord(vertices[TOP], vertexC);
-				}
-
-				//Now identify leftmost & rightmost
-				if (equalityGzCoord(vertices[TOP], vertexA))
-				{
-					//B & C
-					vertexB[X] <= vertexC[X] ? equateGzCoord(vertices[LEFT], vertexB) : equateGzCoord(vertices[LEFT], vertexC);
-					vertexB[X] <= vertexC[X] ? equateGzCoord(vertices[RIGHT], vertexC) : equateGzCoord(vertices[RIGHT], vertexB);
-				}
-				else if (equalityGzCoord(vertices[TOP], vertexB))
-				{
-					//A & C
-					vertexA[X] <= vertexC[X] ? equateGzCoord(vertices[LEFT], vertexA) : equateGzCoord(vertices[LEFT], vertexC);
-					vertexA[X] <= vertexC[X] ? equateGzCoord(vertices[RIGHT], vertexC) : equateGzCoord(vertices[RIGHT], vertexA);
-				}
-				else
-				{
-					//A & B
-					vertexA[X] <= vertexB[X] ? equateGzCoord(vertices[LEFT], vertexA) : equateGzCoord(vertices[LEFT], vertexB);
-					vertexA[X] <= vertexB[X] ? equateGzCoord(vertices[RIGHT], vertexB) : equateGzCoord(vertices[RIGHT], vertexA);
-				}
-
-				//Special Cases:
-				//top two vertices are same height
-				//		TOP1			TOP2
-				//
-				//
-				//
-				//				BOT
-				if (vertices[TOP][Y] == vertices[LEFT][Y] || vertices[TOP][Y] == vertices[RIGHT][Y])
-				{
-					vertices[TOP][Y] == vertices[LEFT][Y] ? equateGzCoord(vertices[TOP2], vertices[LEFT]) : equateGzCoord(vertices[TOP2], vertices[RIGHT]);
-					vertices[TOP][Y] == vertices[LEFT][Y] ? equateGzCoord(vertices[BOT], vertices[RIGHT]) : equateGzCoord(vertices[BOT], vertices[LEFT]);
-
-					//calculate slopes
-					float mainSlope = calculateSlope(vertices[TOP], vertices[BOT]);
-					float slopeA = calculateSlope(vertices[TOP2], vertices[BOT]);
-
-					//intercepts
-					float interceptM = vertices[BOT][X] - (mainSlope * vertices[BOT][Y]);
-					float interceptA = vertices[BOT][X] - (slopeA * vertices[BOT][Y]);
-
-					float xLeft = 0;
-					float xRight = 0;
-
-					//scan
-					for (int j = static_cast<int>(ceil(vertices[TOP][Y])); j < vertices[BOT][Y]; ++j)
-					{
-						//calculate x interpolations
-						xLeft = interpolateX(mainSlope, interceptM, j);
-						xRight = interpolateX(slopeA, interceptA, j);
-
-						//scan
-						for (int i = static_cast<int>(ceil(xLeft)); i < xRight; ++i)
-						{
-							//interpolate Z
-							int Z_ = interpolateZ(vertices, i, j);
-
-							//draw
-							GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-						}
-
-						//scan
-						for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
-						{
-							//interpolate Z
-							int Z_ = interpolateZ(vertices, i, j);
-
-							//draw
-							GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-						}
-					}
-				}
-
-				//vertical lines
-				//		TOP											TOP
-				//			
-				//					SIDE				SIDE
-				//
-				//		BOT											BOT
-
-				else if (vertices[TOP][X] == vertices[LEFT][X] || vertices[TOP][X] == vertices[RIGHT][X])
-				{
-					//Add as needed
-				}
-
-				//Case 1:
-				//Left is lower than right
-				/*
-				TOP
-
-				RIGHT
-
-
-				LEFT
-				*/
-				else if (vertices[LEFT][Y] > vertices[RIGHT][Y])
-				{
-					//calculate slopes
-					float mainSlope = calculateSlope(vertices[TOP], vertices[LEFT]);
-					float slopeA = calculateSlope(vertices[TOP], vertices[RIGHT]);
-					float slopeB = calculateSlope(vertices[RIGHT], vertices[LEFT]);
-
-					//intercept = x - slope(y)
-					float interceptM = vertices[TOP][X] - (mainSlope * vertices[TOP][Y]);
-					float interceptA = vertices[TOP][X] - (slopeA * vertices[TOP][Y]);
-					float interceptB = vertices[RIGHT][X] - (slopeB * vertices[RIGHT][Y]);
-
-					float xLeft = 0;
-					float xRight = 0;
-
-					//scan set 1
-					for (int j = static_cast<int>(ceil(vertices[TOP][Y])); j < vertices[RIGHT][Y]; ++j)
-					{
-						//for every j increment, calculate the x interpolations
-						xLeft = interpolateX(mainSlope, interceptM, j);
-						xRight = interpolateX(slopeA, interceptA, j);
-
-						//iterate through scan line
-						for (int i = static_cast<int>(ceil(xLeft)); i < xRight; ++i)
-						{
-							//interpolate Z
-							int Z_ = interpolateZ(vertices, i, j);
-
-							//draw
-							GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-						}
-
-						for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
-						{
-							//interpolate Z
-							int Z_ = interpolateZ(vertices, i, j);
-
-							//draw
-							GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-						}
-					}
-
-					//scan set 2
-					for (int j = static_cast<int>(ceil(vertices[RIGHT][Y])); j < vertices[LEFT][Y]; ++j)
-					{
-						//for every j increment, calculate the x interpolations
-						xLeft = interpolateX(mainSlope, interceptM, j);
-						xRight = interpolateX(slopeB, interceptB, j);
-
-						//iterate through scan line
-						for (int i = static_cast<int>(ceil(xLeft)); i < xRight; ++i)
-						{
-							//interpolate Z
-							int Z_ = interpolateZ(vertices, i, j);
-
-							//draw
-							GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-						}
-
-						//Scan left
-						for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
-						{
-							//interpolate Z
-							int Z_ = interpolateZ(vertices, i, j);
-
-							//draw
-							GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-						}
-					}
-				}
-
-				//Case 2:
-				//Left is higher than right
-				/*
-				TOP
-
-
-				LEFT
-
-				RIGHT
-				*/
-				else if (vertices[LEFT][Y] < vertices[RIGHT][Y])
-				{
-					//calculate slopes
-					float mainSlope = calculateSlope(vertices[TOP], vertices[RIGHT]);
-					float slopeA = calculateSlope(vertices[TOP], vertices[LEFT]);
-					float slopeB = calculateSlope(vertices[LEFT], vertices[RIGHT]);
-
-					//intercept = x - slope(y)
-					float interceptM = vertices[TOP][X] - (mainSlope * vertices[TOP][Y]);
-					float interceptA = vertices[TOP][X] - (slopeA * vertices[TOP][Y]);
-					float interceptB = vertices[LEFT][X] - (slopeB * vertices[LEFT][Y]);
-
-					float xLeft = 0;
-					float xRight = 0;
-
-					//scan set 1
-					for (int j = static_cast<int>(ceil(vertices[TOP][Y])); j < vertices[LEFT][Y]; ++j)
-					{
-						//for every j increment, calculate the x interpolations
-						xLeft = interpolateX(slopeA, interceptA, j);
-						xRight = interpolateX(mainSlope, interceptM, j);
-
-						//iterate through scan line
-						for (int i = static_cast<int>(ceil(xLeft)); i <= xRight; ++i)
-						{
-							//interpolate Z
-							int Z_ = interpolateZ(vertices, i, j);
-
-							//draw
-							GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-						}
-
-						//Scan left
-						for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
-						{
-							//interpolate Z
-							int Z_ = interpolateZ(vertices, i, j);
-
-							//draw
-							GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-						}
-					}
-
-					//scan set 2
-					for (int j = static_cast<int>(ceil(vertices[LEFT][Y])); j < vertices[RIGHT][Y]; ++j)
-					{
-						//for every j increment, calculate the x interpolations
-						xLeft = interpolateX(slopeB, interceptB, j);
-						xRight = interpolateX(mainSlope, interceptM, j);
-
-						//iterate through scan line
-						for (int i = static_cast<int>(ceil(xLeft)); i <= xRight; ++i)
-						{
-							//interpolate Z
-							int Z_ = interpolateZ(vertices, i, j);
-
-							//draw
-							GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-						}
-						//Scan left
-						for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
-						{
-							//interpolate Z
-							int Z_ = interpolateZ(vertices, i, j);
-
-							//draw
-							GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-						}
-					}
-				}
-
-				//Case 3:
-				//Left is same height as right
-				/*
-				TOP
-
-
-				LEFT			RIGHT
-				*/
-				else
-				{
-					//calculate slopes
-					float mainSlope = calculateSlope(vertices[TOP], vertices[LEFT]);
-					float slopeA = calculateSlope(vertices[TOP], vertices[RIGHT]);
-
-					//intercept = x - slope(y)
-					float interceptM = vertices[TOP][X] - (mainSlope * vertices[TOP][Y]);
-					float interceptA = vertices[TOP][X] - (slopeA * vertices[TOP][Y]);
-
-					float xLeft = 0;
-					float xRight = 0;
-
-					//scan set 1
-					for (int j = static_cast<int>(ceil(vertices[TOP][Y])); j < vertices[LEFT][Y]; ++j)
-					{
-						//for every j increment, calculate the x interpolations
-						xLeft = interpolateX(mainSlope, interceptM, j);
-						xRight = interpolateX(slopeA, interceptA, j);
-
-						//iterate through scan line
-						for (int i = static_cast<int>(ceil(xLeft)); i <= xRight; ++i)
-						{
-							//interpolate Z
-							int Z_ = interpolateZ(vertices, i, j);
-
-							//draw
-							GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-						}
-
-						//Scan left
-						for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
-						{
-							//interpolate Z
-							int Z_ = interpolateZ(vertices, i, j);
-
-							//draw
-							GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-						}
-					}
-				}
 				break;
+			}
+		}
+	}
+
+	//calculate color
+
+	//Specular
+
+	//Diffuse
+
+	//Ambient
+	// Ka * la
+	GzColor ambientColor;
+	ambientColor[RED]	= render->Ka[RED] * render->ambientlight.color[RED];
+	ambientColor[GREEN] = render->Ka[GREEN] * render->ambientlight.color[GREEN];
+	ambientColor[BLUE]	= render->Ka[BLUE] * render->ambientlight.color[BLUE];
+
+	//render
+
+	//find the points of interest, in form of [topmost, left, right]
+	GzCoord vertices[3];
+	GzCoord normals[3];
+	//Case A
+	if (vertexA[Y] < vertexB[Y] && vertexA[Y] < vertexC[Y])
+	{
+		equateGzCoord(vertices[TOP], vertexA);
+		equateGzCoord(normals[TOP], normalA);
+	}
+	//Case B
+	else if (vertexB[Y] < vertexA[Y] && vertexB[Y] < vertexC[Y])
+	{
+		equateGzCoord(vertices[TOP], vertexB);
+		equateGzCoord(normals[TOP], normalB);
+	}
+
+	//Case C
+	else
+	{
+		equateGzCoord(vertices[TOP], vertexC);
+		equateGzCoord(normals[TOP], normalC);
+	}
+
+	//Now identify leftmost & rightmost
+	if (equalityGzCoord(vertices[TOP], vertexA))
+	{
+		//B & C
+		if (vertexB[X] <= vertexC[X])
+		{
+			equateGzCoord(vertices[LEFT], vertexB);
+			equateGzCoord(normals[LEFT], normalB);
+
+			equateGzCoord(vertices[RIGHT], vertexC);
+			equateGzCoord(normals[RIGHT], normalC);
+		}
+		else
+		{
+			equateGzCoord(vertices[LEFT], vertexC);
+			equateGzCoord(normals[LEFT], normalC);
+
+			equateGzCoord(vertices[RIGHT], vertexB);
+			equateGzCoord(normals[RIGHT], normalB);
+		}
+
+
+		//vertexB[X] <= vertexC[X] ? equateGzCoord(vertices[LEFT], vertexB) : equateGzCoord(vertices[LEFT], vertexC);
+		//vertexB[X] <= vertexC[X] ? equateGzCoord(vertices[RIGHT], vertexC) : equateGzCoord(vertices[RIGHT], vertexB);
+	}
+	else if (equalityGzCoord(vertices[TOP], vertexB))
+	{
+		//A & C
+		if (vertexA[X] <= vertexC[X])
+		{
+			equateGzCoord(vertices[LEFT], vertexA);
+			equateGzCoord(normals[LEFT], normalA);
+
+			equateGzCoord(vertices[RIGHT], vertexC);
+			equateGzCoord(normals[RIGHT], normalC);
+		}
+		else
+		{
+			equateGzCoord(vertices[LEFT], vertexC);
+			equateGzCoord(normals[LEFT], normalC);
+
+			equateGzCoord(vertices[RIGHT], vertexA);
+			equateGzCoord(normals[RIGHT], normalA);
+		}
+
+		//vertexA[X] <= vertexC[X] ? equateGzCoord(vertices[LEFT], vertexA) : equateGzCoord(vertices[LEFT], vertexC);
+		//vertexA[X] <= vertexC[X] ? equateGzCoord(vertices[RIGHT], vertexC) : equateGzCoord(vertices[RIGHT], vertexA);
+	}
+	else
+	{
+		//A & B
+		if (vertexA[X] <= vertexB[X])
+		{
+			equateGzCoord(vertices[LEFT], vertexA);
+			equateGzCoord(normals[LEFT], normalA);
+
+			equateGzCoord(vertices[RIGHT], vertexB);
+			equateGzCoord(normals[RIGHT], normalB);
+		}
+		else
+		{
+			equateGzCoord(vertices[LEFT], vertexB);
+			equateGzCoord(normals[LEFT], normalB);
+
+			equateGzCoord(vertices[RIGHT], vertexA);
+			equateGzCoord(normals[RIGHT], normalA);
+		}
+
+		//vertexA[X] <= vertexB[X] ? equateGzCoord(vertices[LEFT], vertexA) : equateGzCoord(vertices[LEFT], vertexB);
+		//vertexA[X] <= vertexB[X] ? equateGzCoord(vertices[RIGHT], vertexB) : equateGzCoord(vertices[RIGHT], vertexA);
+	}
+
+	//Special Cases:
+	//top two vertices are same height
+	//		TOP1			TOP2
+	//
+	//
+	//
+	//				BOT
+	if (vertices[TOP][Y] == vertices[LEFT][Y] || vertices[TOP][Y] == vertices[RIGHT][Y])
+	{
+		vertices[TOP][Y] == vertices[LEFT][Y] ? equateGzCoord(vertices[TOP2], vertices[LEFT]) : equateGzCoord(vertices[TOP2], vertices[RIGHT]);
+		vertices[TOP][Y] == vertices[LEFT][Y] ? equateGzCoord(vertices[BOT], vertices[RIGHT]) : equateGzCoord(vertices[BOT], vertices[LEFT]);
+
+		//calculate slopes
+		float mainSlope = calculateSlope(vertices[TOP], vertices[BOT]);
+		float slopeA = calculateSlope(vertices[TOP2], vertices[BOT]);
+
+		//intercepts
+		float interceptM = vertices[BOT][X] - (mainSlope * vertices[BOT][Y]);
+		float interceptA = vertices[BOT][X] - (slopeA * vertices[BOT][Y]);
+
+		float xLeft = 0;
+		float xRight = 0;
+
+		//scan
+		for (int j = static_cast<int>(ceil(vertices[TOP][Y])); j < vertices[BOT][Y]; ++j)
+		{
+			//calculate x interpolations
+			xLeft = interpolateX(mainSlope, interceptM, j);
+			xRight = interpolateX(slopeA, interceptA, j);
+
+			//scan
+			for (int i = static_cast<int>(ceil(xLeft)); i < xRight; ++i)
+			{
+				//interpolate Z
+				int Z_ = interpolateZ(vertices, i, j);
+
+				//draw
+				GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
+			}
+
+			//scan
+			for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
+			{
+				//interpolate Z
+				int Z_ = interpolateZ(vertices, i, j);
+
+				//draw
+				GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
+			}
+		}
+	}
+
+	//vertical lines
+	//		TOP											TOP
+	//			
+	//					SIDE				SIDE
+	//
+	//		BOT											BOT
+
+	else if (vertices[TOP][X] == vertices[LEFT][X] || vertices[TOP][X] == vertices[RIGHT][X])
+	{
+		//Add as needed
+	}
+
+	//Case 1:
+	//Left is lower than right
+	/*
+	TOP
+
+	RIGHT
+
+
+	LEFT
+	*/
+	else if (vertices[LEFT][Y] > vertices[RIGHT][Y])
+	{
+		//calculate slopes
+		float mainSlope = calculateSlope(vertices[TOP], vertices[LEFT]);
+		float slopeA = calculateSlope(vertices[TOP], vertices[RIGHT]);
+		float slopeB = calculateSlope(vertices[RIGHT], vertices[LEFT]);
+
+		//intercept = x - slope(y)
+		float interceptM = vertices[TOP][X] - (mainSlope * vertices[TOP][Y]);
+		float interceptA = vertices[TOP][X] - (slopeA * vertices[TOP][Y]);
+		float interceptB = vertices[RIGHT][X] - (slopeB * vertices[RIGHT][Y]);
+
+		float xLeft = 0;
+		float xRight = 0;
+
+		//scan set 1
+		for (int j = static_cast<int>(ceil(vertices[TOP][Y])); j < vertices[RIGHT][Y]; ++j)
+		{
+			//for every j increment, calculate the x interpolations
+			xLeft = interpolateX(mainSlope, interceptM, j);
+			xRight = interpolateX(slopeA, interceptA, j);
+
+			//iterate through scan line
+			for (int i = static_cast<int>(ceil(xLeft)); i < xRight; ++i)
+			{
+				//interpolate Z
+				int Z_ = interpolateZ(vertices, i, j);
+
+				//draw
+				GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
+			}
+
+			for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
+			{
+				//interpolate Z
+				int Z_ = interpolateZ(vertices, i, j);
+
+				//draw
+				GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
+			}
+		}
+
+		//scan set 2
+		for (int j = static_cast<int>(ceil(vertices[RIGHT][Y])); j < vertices[LEFT][Y]; ++j)
+		{
+			//for every j increment, calculate the x interpolations
+			xLeft = interpolateX(mainSlope, interceptM, j);
+			xRight = interpolateX(slopeB, interceptB, j);
+
+			//iterate through scan line
+			for (int i = static_cast<int>(ceil(xLeft)); i < xRight; ++i)
+			{
+				//interpolate Z
+				int Z_ = interpolateZ(vertices, i, j);
+
+				//draw
+				GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
+			}
+
+			//Scan left
+			for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
+			{
+				//interpolate Z
+				int Z_ = interpolateZ(vertices, i, j);
+
+				//draw
+				GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
+			}
+		}
+	}
+
+	//Case 2:
+	//Left is higher than right
+	/*
+	TOP
+
+
+	LEFT
+
+	RIGHT
+	*/
+	else if (vertices[LEFT][Y] < vertices[RIGHT][Y])
+	{
+		//calculate slopes
+		float mainSlope = calculateSlope(vertices[TOP], vertices[RIGHT]);
+		float slopeA = calculateSlope(vertices[TOP], vertices[LEFT]);
+		float slopeB = calculateSlope(vertices[LEFT], vertices[RIGHT]);
+
+		//intercept = x - slope(y)
+		float interceptM = vertices[TOP][X] - (mainSlope * vertices[TOP][Y]);
+		float interceptA = vertices[TOP][X] - (slopeA * vertices[TOP][Y]);
+		float interceptB = vertices[LEFT][X] - (slopeB * vertices[LEFT][Y]);
+
+		float xLeft = 0;
+		float xRight = 0;
+
+		//scan set 1
+		for (int j = static_cast<int>(ceil(vertices[TOP][Y])); j < vertices[LEFT][Y]; ++j)
+		{
+			//for every j increment, calculate the x interpolations
+			xLeft = interpolateX(slopeA, interceptA, j);
+			xRight = interpolateX(mainSlope, interceptM, j);
+
+			//iterate through scan line
+			for (int i = static_cast<int>(ceil(xLeft)); i <= xRight; ++i)
+			{
+				//interpolate Z
+				int Z_ = interpolateZ(vertices, i, j);
+
+				//draw
+				GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
+			}
+
+			//Scan left
+			for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
+			{
+				//interpolate Z
+				int Z_ = interpolateZ(vertices, i, j);
+
+				//draw
+				GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
+			}
+		}
+
+		//scan set 2
+		for (int j = static_cast<int>(ceil(vertices[LEFT][Y])); j < vertices[RIGHT][Y]; ++j)
+		{
+			//for every j increment, calculate the x interpolations
+			xLeft = interpolateX(slopeB, interceptB, j);
+			xRight = interpolateX(mainSlope, interceptM, j);
+
+			//iterate through scan line
+			for (int i = static_cast<int>(ceil(xLeft)); i <= xRight; ++i)
+			{
+				//interpolate Z
+				int Z_ = interpolateZ(vertices, i, j);
+
+				//draw
+				GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
+			}
+			//Scan left
+			for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
+			{
+				//interpolate Z
+				int Z_ = interpolateZ(vertices, i, j);
+
+				//draw
+				GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
+			}
+		}
+	}
+
+	//Case 3:
+	//Left is same height as right
+	/*
+	TOP
+
+
+	LEFT			RIGHT
+	*/
+	else
+	{
+		//calculate slopes
+		float mainSlope = calculateSlope(vertices[TOP], vertices[LEFT]);
+		float slopeA = calculateSlope(vertices[TOP], vertices[RIGHT]);
+
+		//intercept = x - slope(y)
+		float interceptM = vertices[TOP][X] - (mainSlope * vertices[TOP][Y]);
+		float interceptA = vertices[TOP][X] - (slopeA * vertices[TOP][Y]);
+
+		float xLeft = 0;
+		float xRight = 0;
+
+		//scan set 1
+		for (int j = static_cast<int>(ceil(vertices[TOP][Y])); j < vertices[LEFT][Y]; ++j)
+		{
+			//for every j increment, calculate the x interpolations
+			xLeft = interpolateX(mainSlope, interceptM, j);
+			xRight = interpolateX(slopeA, interceptA, j);
+
+			//iterate through scan line
+			for (int i = static_cast<int>(ceil(xLeft)); i <= xRight; ++i)
+			{
+				//interpolate Z
+				int Z_ = interpolateZ(vertices, i, j);
+
+				//draw
+				GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
+			}
+
+			//Scan left
+			for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
+			{
+				//interpolate Z
+				int Z_ = interpolateZ(vertices, i, j);
+
+				//draw
+				GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
 			}
 		}
 	}

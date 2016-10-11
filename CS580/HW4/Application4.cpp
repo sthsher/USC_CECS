@@ -266,9 +266,9 @@ int Application4::Render()
 	     * triangle, then feed it to the renderer 
 	     * NOTE: this sequence matches the nameList token sequence
 	     */ 
-	     	valueListTriangle[0] = (GzPointer)vertexList; 
+		valueListTriangle[0] = (GzPointer)vertexList; 
 		valueListTriangle[1] = (GzPointer)normalList; 
-	     	GzPutTriangle(m_pRender, 2, nameListTriangle, valueListTriangle); 
+		GzPutTriangle(m_pRender, 2, nameListTriangle, valueListTriangle); 
 	} 
 
 	GzFlushDisplay2File(outfile, m_pDisplay); 	/* write out or update display to file*/
