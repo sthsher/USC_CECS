@@ -1404,19 +1404,25 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 		float mainRGBSlopes[3];
 		float RGBSlopesA[3];
 		float RGBSlopesB[3];
-		calculateRGBSlope(vertices[TOP], vertices[LEFT], colors[TOP], colors[LEFT], mainRGBSlopes);
-		calculateRGBSlope(vertices[TOP], vertices[RIGHT], colors[TOP], colors[RIGHT], RGBSlopesA);
-		calculateRGBSlope(vertices[RIGHT], vertices[LEFT], colors[RIGHT], colors[LEFT], RGBSlopesB);
 
 		float RGBinterceptsM[3];
 		float RGBinterceptsA[3];
 		float RGBinterceptsB[3];
-		calculateRGBIntercepts(mainRGBSlopes, colors[TOP], vertices[TOP][Y], RGBinterceptsM);
-		calculateRGBIntercepts(RGBSlopesA, colors[TOP], vertices[TOP][Y], RGBinterceptsA);
-		calculateRGBIntercepts(RGBSlopesB, colors[RIGHT], vertices[RIGHT][Y], RGBinterceptsB);
 
 		GzColor RGBxLeft;
 		GzColor RGBxRight;
+
+		if (render->interp_mode == GZ_COLOR)
+		{
+			calculateRGBSlope(vertices[TOP], vertices[LEFT], colors[TOP], colors[LEFT], mainRGBSlopes);
+			calculateRGBSlope(vertices[TOP], vertices[RIGHT], colors[TOP], colors[RIGHT], RGBSlopesA);
+			calculateRGBSlope(vertices[RIGHT], vertices[LEFT], colors[RIGHT], colors[LEFT], RGBSlopesB);
+
+			calculateRGBIntercepts(mainRGBSlopes, colors[TOP], vertices[TOP][Y], RGBinterceptsM);
+			calculateRGBIntercepts(RGBSlopesA, colors[TOP], vertices[TOP][Y], RGBinterceptsA);
+			calculateRGBIntercepts(RGBSlopesB, colors[RIGHT], vertices[RIGHT][Y], RGBinterceptsB);
+		}
+
 
 		//scan set 1
 		for (int j = static_cast<int>(ceil(vertices[TOP][Y])); j < vertices[RIGHT][Y]; ++j)
@@ -1425,15 +1431,19 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 			xLeft = interpolateX(mainSlope, interceptM, j);
 			xRight = interpolateX(slopeA, interceptA, j);
 
-			//interpolate RGB
-			interpolateRGB(mainRGBSlopes, RGBinterceptsM, j, RGBxLeft);
-			interpolateRGB(RGBSlopesA, RGBinterceptsA, j, RGBxRight);
-
 			float mRGB[3];
 			float bRGB[3];
 			float deltaX = xRight - xLeft;
-			calculateRGBSlopePoint(RGBxLeft, RGBxRight, deltaX, mRGB);
-			calculateRGBIntercepts(mRGB, RGBxLeft, xLeft, bRGB);
+
+			if (render->interp_mode == GZ_COLOR)
+			{
+				//interpolate RGB
+				interpolateRGB(mainRGBSlopes, RGBinterceptsM, j, RGBxLeft);
+				interpolateRGB(RGBSlopesA, RGBinterceptsA, j, RGBxRight);
+
+				calculateRGBSlopePoint(RGBxLeft, RGBxRight, deltaX, mRGB);
+				calculateRGBIntercepts(mRGB, RGBxLeft, xLeft, bRGB);
+			}
 
 			//iterate through scan line
 			for (int i = static_cast<int>(ceil(xLeft)); i < xRight; ++i)
@@ -1445,17 +1455,7 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				GzColor color;
 				interpolateRGB(mRGB, bRGB, i, color);
 
-				if (render->interp_mode == GZ_COLOR)
-				{
-					GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
-					//GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-
-				}
-				else
-				{
-					//draw
-					GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-				}
+				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
 			}
 
 			for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
@@ -1467,17 +1467,7 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				GzColor color;
 				interpolateRGB(mRGB, bRGB, i, color);
 
-				if (render->interp_mode == GZ_COLOR)
-				{
-					GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
-					//GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-
-				}
-				else
-				{
-					//draw
-					GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-				}
+				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
 			}
 		}
 
@@ -1488,15 +1478,19 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 			xLeft = interpolateX(mainSlope, interceptM, j);
 			xRight = interpolateX(slopeB, interceptB, j);
 
-			//interpolate RGB
-			interpolateRGB(mainRGBSlopes, RGBinterceptsM, j, RGBxLeft);
-			interpolateRGB(RGBSlopesB, RGBinterceptsB, j, RGBxRight);
-
 			float mRGB[3];
 			float bRGB[3];
 			float deltaX = xRight - xLeft;
-			calculateRGBSlopePoint(RGBxLeft, RGBxRight, deltaX, mRGB);
-			calculateRGBIntercepts(mRGB, RGBxLeft, xLeft, bRGB);
+
+			if (render->interp_mode == GZ_COLOR)
+			{
+				//interpolate RGB
+				interpolateRGB(mainRGBSlopes, RGBinterceptsM, j, RGBxLeft);
+				interpolateRGB(RGBSlopesB, RGBinterceptsB, j, RGBxRight);
+
+				calculateRGBSlopePoint(RGBxLeft, RGBxRight, deltaX, mRGB);
+				calculateRGBIntercepts(mRGB, RGBxLeft, xLeft, bRGB);
+			}
 
 			//iterate through scan line
 			for (int i = static_cast<int>(ceil(xLeft)); i < xRight; ++i)
@@ -1508,16 +1502,7 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				GzColor color;
 				interpolateRGB(mRGB, bRGB, i, color);
 
-				if (render->interp_mode == GZ_COLOR)
-				{
-					GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
-					//GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-				}
-				else
-				{
-					//draw
-					GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-				}
+				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
 			}
 
 			for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
@@ -1529,16 +1514,7 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				GzColor color;
 				interpolateRGB(mRGB, bRGB, i, color);
 
-				if (render->interp_mode == GZ_COLOR)
-				{
-					GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
-					//GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-				}
-				else
-				{
-					//draw
-					GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-				}
+				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
 			}
 		}
 	}
@@ -1569,22 +1545,27 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 		float xRight = 0;
 
 		//For Gouraud
-		float mainRGBSlopes[3];
-		float RGBSlopesA[3];
-		float RGBSlopesB[3];
-		calculateRGBSlope(vertices[TOP], vertices[RIGHT], colors[TOP], colors[RIGHT], mainRGBSlopes);
-		calculateRGBSlope(vertices[TOP], vertices[LEFT], colors[TOP], colors[LEFT], RGBSlopesA);
-		calculateRGBSlope(vertices[LEFT], vertices[RIGHT], colors[LEFT], colors[RIGHT], RGBSlopesB);
-
 		float RGBinterceptsM[3];
 		float RGBinterceptsA[3];
 		float RGBinterceptsB[3];
-		calculateRGBIntercepts(mainRGBSlopes, colors[TOP], vertices[TOP][Y], RGBinterceptsM);
-		calculateRGBIntercepts(RGBSlopesA, colors[TOP], vertices[TOP][Y], RGBinterceptsA);
-		calculateRGBIntercepts(RGBSlopesB, colors[LEFT], vertices[LEFT][Y], RGBinterceptsB);
 
 		GzColor RGBxLeft;
 		GzColor RGBxRight;
+
+		float mainRGBSlopes[3];
+		float RGBSlopesA[3];
+		float RGBSlopesB[3];
+
+		if (render->interp_mode == GZ_COLOR)
+		{
+			calculateRGBSlope(vertices[TOP], vertices[RIGHT], colors[TOP], colors[RIGHT], mainRGBSlopes);
+			calculateRGBSlope(vertices[TOP], vertices[LEFT], colors[TOP], colors[LEFT], RGBSlopesA);
+			calculateRGBSlope(vertices[LEFT], vertices[RIGHT], colors[LEFT], colors[RIGHT], RGBSlopesB);
+
+			calculateRGBIntercepts(mainRGBSlopes, colors[TOP], vertices[TOP][Y], RGBinterceptsM);
+			calculateRGBIntercepts(RGBSlopesA, colors[TOP], vertices[TOP][Y], RGBinterceptsA);
+			calculateRGBIntercepts(RGBSlopesB, colors[LEFT], vertices[LEFT][Y], RGBinterceptsB);
+		}
 
 		//scan set 1
 		for (int j = static_cast<int>(ceil(vertices[TOP][Y])); j < vertices[LEFT][Y]; ++j)
@@ -1593,15 +1574,19 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 			xLeft = interpolateX(slopeA, interceptA, j);
 			xRight = interpolateX(mainSlope, interceptM, j);
 
-			//interpolate RGB
-			interpolateRGB(RGBSlopesA, RGBinterceptsA, j, RGBxLeft);
-			interpolateRGB(mainRGBSlopes, RGBinterceptsM, j, RGBxRight);
-
 			float mRGB[3];
 			float bRGB[3];
 			float deltaX = xRight - xLeft;
-			calculateRGBSlopePoint(RGBxLeft, RGBxRight, deltaX, mRGB);
-			calculateRGBIntercepts(mRGB, RGBxLeft, xLeft, bRGB);
+
+			if (render->interp_mode == GZ_COLOR)
+			{
+				//interpolate RGB
+				interpolateRGB(RGBSlopesA, RGBinterceptsA, j, RGBxLeft);
+				interpolateRGB(mainRGBSlopes, RGBinterceptsM, j, RGBxRight);
+
+				calculateRGBSlopePoint(RGBxLeft, RGBxRight, deltaX, mRGB);
+				calculateRGBIntercepts(mRGB, RGBxLeft, xLeft, bRGB);
+			}
 
 			//iterate through scan line
 			for (int i = static_cast<int>(ceil(xLeft)); i < xRight; ++i)
@@ -1613,16 +1598,7 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				GzColor color;
 				interpolateRGB(mRGB, bRGB, i, color);
 
-				if (render->interp_mode == GZ_COLOR)
-				{
-					GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
-					//GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-				}
-				else
-				{
-					//draw
-					GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-				}
+				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
 			}
 
 			for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
@@ -1634,16 +1610,7 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				GzColor color;
 				interpolateRGB(mRGB, bRGB, i, color);
 
-				if (render->interp_mode == GZ_COLOR)
-				{
-					GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
-					//GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-				}
-				else
-				{
-					//draw
-					GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-				}
+				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
 			}
 		}
 
@@ -1674,16 +1641,7 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				GzColor color;
 				interpolateRGB(mRGB, bRGB, i, color);
 
-				if (render->interp_mode == GZ_COLOR)
-				{
-					GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
-					//GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-				}
-				else
-				{
-					//draw
-					GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-				}
+				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
 			}
 
 			for (int i = static_cast<int>(ceil(xRight)); i < xLeft; ++i)
@@ -1695,16 +1653,8 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				GzColor color;
 				interpolateRGB(mRGB, bRGB, i, color);
 
-				if (render->interp_mode == GZ_COLOR)
-				{
-					GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
-					//GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-				}
-				else
-				{
-					//draw
-					GzPutDisplay(render->display, i, j, ctoi(render->flatcolor[RED]), ctoi(render->flatcolor[GREEN]), ctoi(render->flatcolor[BLUE]), 1, Z_);
-				}
+				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
+
 			}
 		}
 	}
