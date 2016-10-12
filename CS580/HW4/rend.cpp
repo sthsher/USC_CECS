@@ -853,6 +853,13 @@ void calculateRGBSlopePoint(const float* RGBxLeft, const float* RGBxRight, const
 	slopes[BLUE] = (RGBxRight[BLUE] - RGBxLeft[BLUE]) / deltaX;
 }
 
+void calculateNormalSlopePoint(const float* normalxLeft, const float* normalxRight, const float deltaX, float* slopes)
+{
+	slopes[X] = (normalxRight[X] - normalxLeft[X]) / deltaX;
+	slopes[Y] = (normalxRight[Y] - normalxLeft[Y]) / deltaX;
+	slopes[Z] = (normalxRight[Z] - normalxLeft[Z]) / deltaX;
+}
+
 void calculateRGBSlope(const GzCoord point1, const GzCoord point2, const GzColor color1, const GzColor color2, float* slopes)
 {
 	float r1 = color1[RED];
@@ -872,6 +879,25 @@ void calculateRGBSlope(const GzCoord point1, const GzCoord point2, const GzColor
 	slopes[BLUE] = bDelta / yDelta;
 }
 
+void calculateNormalSlope(const GzCoord point1, const GzCoord point2, const GzCoord normal1, const GzCoord normal2, float* slopes)
+{
+	float x1 = normal1[X];
+	float x2 = normal2[X];
+	float y1 = normal1[Y];
+	float y2 = normal2[Y];
+	float z1 = normal1[Z];
+	float z2 = normal2[Z];
+
+	float DELTA = point2[Y] - point1[Y];
+	float xDelta = x2 - x1;
+	float yDelta = y2 - y1;
+	float zDelta = z2 - z1;
+
+	slopes[X] = xDelta / DELTA;
+	slopes[Y] = yDelta / DELTA;
+	slopes[Z] = zDelta / DELTA;
+}
+
 float interpolateX(const float slope, const float intercept, const int y)
 {
 	//x = my + b
@@ -881,9 +907,17 @@ float interpolateX(const float slope, const float intercept, const int y)
 void calculateRGBIntercepts(const float* slopes, const GzColor c, const float y, float* intercepts)
 {
 	//intercept = c - slope * y
-	intercepts[RED] = c[RED] - slopes[RED] * y;
-	intercepts[GREEN] = c[GREEN] - slopes[GREEN] * y;
-	intercepts[BLUE] = c[BLUE] - slopes[BLUE] * y;
+	intercepts[RED] = c[RED] - (slopes[RED] * y);
+	intercepts[GREEN] = c[GREEN] - (slopes[GREEN] * y);
+	intercepts[BLUE] = c[BLUE] - (slopes[BLUE] * y);
+}
+
+void calculateNormalIntercepts(const float* slopes, const GzCoord n, const float y, float* intercepts)
+{
+	//intercept = c - slope * y
+	intercepts[X] = n[X] - (slopes[X] * y);
+	intercepts[Y] = n[Y] - (slopes[Y] * y);
+	intercepts[Z] = n[Z] - (slopes[Z] * y);
 }
 
 void interpolateRGB(const float* slopes, const float* intercepts, const int y, GzColor& c)
@@ -891,6 +925,13 @@ void interpolateRGB(const float* slopes, const float* intercepts, const int y, G
 	c[RED] = ((slopes[RED] * y) + intercepts[RED]);
 	c[GREEN] = ((slopes[GREEN] * y) + intercepts[GREEN]);
 	c[BLUE] = ((slopes[BLUE] * y) + intercepts[BLUE]);
+}
+
+void interpolateNormals(const float* slopes, const float* intercepts, const int y, GzCoord& normals)
+{
+	normals[X] = ((slopes[X] * y) + intercepts[X]);
+	normals[Y] = ((slopes[Y] * y) + intercepts[Y]);
+	normals[Z] = ((slopes[Z] * y) + intercepts[Z]);
 }
 
 int interpolateZ(const GzCoord* vertices, const int x, const int y)
@@ -1412,6 +1453,18 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 		GzColor RGBxLeft;
 		GzColor RGBxRight;
 
+		//For Phong
+		float mainNormalSlopes[3];
+		float normalSlopesA[3];
+		float normalSlopesB[3];
+
+		float normalInterceptsM[3];
+		float normalInterceptsA[3];
+		float normalInterceptsB[3];
+
+		GzCoord normalxLeft;
+		GzCoord normalxRight;
+
 		if (render->interp_mode == GZ_COLOR)
 		{
 			calculateRGBSlope(vertices[TOP], vertices[LEFT], colors[TOP], colors[LEFT], mainRGBSlopes);
@@ -1422,7 +1475,16 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 			calculateRGBIntercepts(RGBSlopesA, colors[TOP], vertices[TOP][Y], RGBinterceptsA);
 			calculateRGBIntercepts(RGBSlopesB, colors[RIGHT], vertices[RIGHT][Y], RGBinterceptsB);
 		}
+		else if (render->interp_mode == GZ_NORMALS)
+		{
+			calculateNormalSlope(vertices[TOP], vertices[LEFT], normals[TOP], normals[LEFT], mainNormalSlopes);
+			calculateNormalSlope(vertices[TOP], vertices[RIGHT], normals[TOP], normals[RIGHT], normalSlopesA);
+			calculateNormalSlope(vertices[RIGHT], vertices[LEFT], normals[RIGHT], normals[LEFT], normalSlopesB);
 
+			calculateNormalIntercepts(mainNormalSlopes, normals[TOP], vertices[TOP][Y], normalInterceptsM);
+			calculateNormalIntercepts(normalSlopesA, normals[TOP], vertices[TOP][Y], normalInterceptsA);
+			calculateNormalIntercepts(normalSlopesB, normals[RIGHT], vertices[RIGHT][Y], normalInterceptsB);
+		}
 
 		//scan set 1
 		for (int j = static_cast<int>(ceil(vertices[TOP][Y])); j < vertices[RIGHT][Y]; ++j)
@@ -1433,6 +1495,8 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 
 			float mRGB[3];
 			float bRGB[3];
+			float mNormal[3];
+			float bNormal[3];
 			float deltaX = xRight - xLeft;
 
 			if (render->interp_mode == GZ_COLOR)
@@ -1444,6 +1508,15 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				calculateRGBSlopePoint(RGBxLeft, RGBxRight, deltaX, mRGB);
 				calculateRGBIntercepts(mRGB, RGBxLeft, xLeft, bRGB);
 			}
+			else if (render->interp_mode == GZ_NORMALS)
+			{
+				//interpolate Normals
+				interpolateNormals(mainNormalSlopes, normalInterceptsM, j, normalxLeft);
+				interpolateNormals(normalSlopesA, normalInterceptsA, j, normalxRight);
+
+				calculateNormalSlopePoint(normalxLeft, normalxRight, deltaX, mNormal);
+				calculateNormalIntercepts(mNormal, normalxLeft, xLeft, bNormal);
+			}
 
 			//iterate through scan line
 			for (int i = static_cast<int>(ceil(xLeft)); i < xRight; ++i)
@@ -1453,7 +1526,28 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 
 				//interpolate RGB
 				GzColor color;
-				interpolateRGB(mRGB, bRGB, i, color);
+				switch (render->interp_mode)
+				{
+					case GZ_FLAT:
+					{
+						color[RED] = render->flatcolor[RED];
+						color[GREEN] = render->flatcolor[GREEN];
+						color[BLUE] = render->flatcolor[BLUE];
+						break;
+					}
+					case GZ_COLOR:
+					{
+						interpolateRGB(mRGB, bRGB, i, color);
+						break;
+					}
+					case GZ_NORMALS:
+					{
+						GzCoord normal;
+						interpolateNormals(mNormal, bNormal, i, normal);
+						shadingEquation(color, render, normal);
+						break;
+					}
+				}
 
 				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
 			}
@@ -1465,8 +1559,28 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 
 				//interpolate RGB
 				GzColor color;
-				interpolateRGB(mRGB, bRGB, i, color);
-
+				switch (render->interp_mode)
+				{
+					case GZ_FLAT:
+					{
+						color[RED] = render->flatcolor[RED];
+						color[GREEN] = render->flatcolor[GREEN];
+						color[BLUE] = render->flatcolor[BLUE];
+						break;
+					}
+					case GZ_COLOR:
+					{
+						interpolateRGB(mRGB, bRGB, i, color);
+						break;
+					}
+					case GZ_NORMALS:
+					{
+						GzCoord normal;
+						interpolateNormals(mNormal, bNormal, i, normal);
+						shadingEquation(color, render, normal);
+						break;
+					}
+				}
 				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
 			}
 		}
@@ -1480,6 +1594,8 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 
 			float mRGB[3];
 			float bRGB[3];
+			float mNormal[3];
+			float bNormal[3];
 			float deltaX = xRight - xLeft;
 
 			if (render->interp_mode == GZ_COLOR)
@@ -1491,6 +1607,15 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				calculateRGBSlopePoint(RGBxLeft, RGBxRight, deltaX, mRGB);
 				calculateRGBIntercepts(mRGB, RGBxLeft, xLeft, bRGB);
 			}
+			else if (render->interp_mode == GZ_NORMALS)
+			{
+				//interpolate Normals
+				interpolateNormals(mainNormalSlopes, normalInterceptsM, j, normalxLeft);
+				interpolateNormals(normalSlopesB, normalInterceptsB, j, normalxRight);
+
+				calculateNormalSlopePoint(normalxLeft, normalxRight, deltaX, mNormal);
+				calculateNormalIntercepts(mNormal, normalxLeft, xLeft, bNormal);
+			}
 
 			//iterate through scan line
 			for (int i = static_cast<int>(ceil(xLeft)); i < xRight; ++i)
@@ -1500,8 +1625,28 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 
 				//interpolate RGB
 				GzColor color;
-				interpolateRGB(mRGB, bRGB, i, color);
-
+				switch (render->interp_mode)
+				{
+					case GZ_FLAT:
+					{
+						color[RED] = render->flatcolor[RED];
+						color[GREEN] = render->flatcolor[GREEN];
+						color[BLUE] = render->flatcolor[BLUE];
+						break;
+					}
+					case GZ_COLOR:
+					{
+						interpolateRGB(mRGB, bRGB, i, color);
+						break;
+					}
+					case GZ_NORMALS:
+					{
+						GzCoord normal;
+						interpolateNormals(mNormal, bNormal, i, normal);
+						shadingEquation(color, render, normal);
+						break;
+					}
+				}
 				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
 			}
 
@@ -1512,8 +1657,28 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 
 				//interpolate RGB
 				GzColor color;
-				interpolateRGB(mRGB, bRGB, i, color);
-
+				switch (render->interp_mode)
+				{
+					case GZ_FLAT:
+					{
+						color[RED] = render->flatcolor[RED];
+						color[GREEN] = render->flatcolor[GREEN];
+						color[BLUE] = render->flatcolor[BLUE];
+						break;
+					}
+					case GZ_COLOR:
+					{
+						interpolateRGB(mRGB, bRGB, i, color);
+						break;
+					}
+					case GZ_NORMALS:
+					{
+						GzCoord normal;
+						interpolateNormals(mNormal, bNormal, i, normal);
+						shadingEquation(color, render, normal);
+						break;
+					}
+				}
 				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
 			}
 		}
@@ -1556,6 +1721,18 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 		float RGBSlopesA[3];
 		float RGBSlopesB[3];
 
+		//For Phong
+		float mainNormalSlopes[3];
+		float normalSlopesA[3];
+		float normalSlopesB[3];
+
+		float normalInterceptsM[3];
+		float normalInterceptsA[3];
+		float normalInterceptsB[3];
+
+		GzCoord normalxLeft;
+		GzCoord normalxRight;
+
 		if (render->interp_mode == GZ_COLOR)
 		{
 			calculateRGBSlope(vertices[TOP], vertices[RIGHT], colors[TOP], colors[RIGHT], mainRGBSlopes);
@@ -1565,6 +1742,16 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 			calculateRGBIntercepts(mainRGBSlopes, colors[TOP], vertices[TOP][Y], RGBinterceptsM);
 			calculateRGBIntercepts(RGBSlopesA, colors[TOP], vertices[TOP][Y], RGBinterceptsA);
 			calculateRGBIntercepts(RGBSlopesB, colors[LEFT], vertices[LEFT][Y], RGBinterceptsB);
+		}
+		else if (render->interp_mode == GZ_NORMALS)
+		{
+			calculateNormalSlope(vertices[TOP], vertices[RIGHT], normals[TOP], normals[RIGHT], mainNormalSlopes);
+			calculateNormalSlope(vertices[TOP], vertices[LEFT], normals[TOP], normals[LEFT], normalSlopesA);
+			calculateNormalSlope(vertices[LEFT], vertices[RIGHT], normals[LEFT], normals[RIGHT], normalSlopesB);
+
+			calculateNormalIntercepts(mainNormalSlopes, normals[TOP], vertices[TOP][Y], normalInterceptsM);
+			calculateNormalIntercepts(normalSlopesA, normals[TOP], vertices[TOP][Y], normalInterceptsA);
+			calculateNormalIntercepts(normalSlopesB, normals[LEFT], vertices[LEFT][Y], normalInterceptsB);
 		}
 
 		//scan set 1
@@ -1576,6 +1763,8 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 
 			float mRGB[3];
 			float bRGB[3];
+			float mNormal[3];
+			float bNormal[3];
 			float deltaX = xRight - xLeft;
 
 			if (render->interp_mode == GZ_COLOR)
@@ -1587,6 +1776,15 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				calculateRGBSlopePoint(RGBxLeft, RGBxRight, deltaX, mRGB);
 				calculateRGBIntercepts(mRGB, RGBxLeft, xLeft, bRGB);
 			}
+			else if (render->interp_mode == GZ_NORMALS)
+			{
+				//interpolate Normals
+				interpolateNormals(normalSlopesA, normalInterceptsA, j, normalxLeft);
+				interpolateNormals(mainNormalSlopes, normalInterceptsM, j, normalxRight);
+
+				calculateNormalSlopePoint(normalxLeft, normalxRight, deltaX, mNormal);
+				calculateNormalIntercepts(mNormal, normalxLeft, xLeft, bNormal);
+			}
 
 			//iterate through scan line
 			for (int i = static_cast<int>(ceil(xLeft)); i < xRight; ++i)
@@ -1596,8 +1794,28 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 
 				//interpolate RGB
 				GzColor color;
-				interpolateRGB(mRGB, bRGB, i, color);
-
+				switch (render->interp_mode)
+				{
+					case GZ_FLAT:
+					{
+						color[RED] = render->flatcolor[RED];
+						color[GREEN] = render->flatcolor[GREEN];
+						color[BLUE] = render->flatcolor[BLUE];
+						break;
+					}
+					case GZ_COLOR:
+					{
+						interpolateRGB(mRGB, bRGB, i, color);
+						break;
+					}
+					case GZ_NORMALS:
+					{
+						GzCoord normal;
+						interpolateNormals(mNormal, bNormal, i, normal);
+						shadingEquation(color, render, normal);
+						break;
+					}
+				}
 				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
 			}
 
@@ -1608,8 +1826,28 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 
 				//interpolate RGB
 				GzColor color;
-				interpolateRGB(mRGB, bRGB, i, color);
-
+				switch (render->interp_mode)
+				{
+					case GZ_FLAT:
+					{
+						color[RED] = render->flatcolor[RED];
+						color[GREEN] = render->flatcolor[GREEN];
+						color[BLUE] = render->flatcolor[BLUE];
+						break;
+					}
+					case GZ_COLOR:
+					{
+						interpolateRGB(mRGB, bRGB, i, color);
+						break;
+					}
+					case GZ_NORMALS:
+					{
+						GzCoord normal;
+						interpolateNormals(mNormal, bNormal, i, normal);
+						shadingEquation(color, render, normal);
+						break;
+					}
+				}
 				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
 			}
 		}
@@ -1621,15 +1859,30 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 			xLeft = interpolateX(slopeB, interceptB, j);
 			xRight = interpolateX(mainSlope, interceptM, j);
 
-			//interpolate RGB
-			interpolateRGB(RGBSlopesB, RGBinterceptsB, j, RGBxLeft);
-			interpolateRGB(mainRGBSlopes, RGBinterceptsM, j, RGBxRight);
-
 			float mRGB[3];
 			float bRGB[3];
+			float mNormal[3];
+			float bNormal[3];
 			float deltaX = xRight - xLeft;
-			calculateRGBSlopePoint(RGBxLeft, RGBxRight, deltaX, mRGB);
-			calculateRGBIntercepts(mRGB, RGBxLeft, xLeft, bRGB);
+			
+			if (render->interp_mode == GZ_COLOR)
+			{
+				//interpolate RGB
+				interpolateRGB(RGBSlopesB, RGBinterceptsB, j, RGBxLeft);
+				interpolateRGB(mainRGBSlopes, RGBinterceptsM, j, RGBxRight);
+
+				calculateRGBSlopePoint(RGBxLeft, RGBxRight, deltaX, mRGB);
+				calculateRGBIntercepts(mRGB, RGBxLeft, xLeft, bRGB);
+			}
+			else if (render->interp_mode == GZ_NORMALS)
+			{
+				//interpolate Normals
+				interpolateNormals(normalSlopesB, normalInterceptsB, j, normalxLeft);
+				interpolateNormals(mainNormalSlopes, normalInterceptsM, j, normalxRight);
+
+				calculateNormalSlopePoint(normalxLeft, normalxRight, deltaX, mNormal);
+				calculateNormalIntercepts(mNormal, normalxLeft, xLeft, bNormal);
+			}
 
 			//iterate through scan line
 			for (int i = static_cast<int>(ceil(xLeft)); i < xRight; ++i)
@@ -1639,7 +1892,28 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 
 				//interpolate RGB
 				GzColor color;
-				interpolateRGB(mRGB, bRGB, i, color);
+				switch (render->interp_mode)
+				{
+					case GZ_FLAT:
+					{
+						color[RED] = render->flatcolor[RED];
+						color[GREEN] = render->flatcolor[GREEN];
+						color[BLUE] = render->flatcolor[BLUE];
+						break;
+					}
+					case GZ_COLOR:
+					{
+						interpolateRGB(mRGB, bRGB, i, color);
+						break;
+					}
+					case GZ_NORMALS:
+					{
+						GzCoord normal;
+						interpolateNormals(mNormal, bNormal, i, normal);
+						shadingEquation(color, render, normal);
+						break;
+					}
+				}
 
 				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
 			}
@@ -1651,7 +1925,28 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 
 				//interpolate RGB
 				GzColor color;
-				interpolateRGB(mRGB, bRGB, i, color);
+				switch (render->interp_mode)
+				{
+					case GZ_FLAT:
+					{
+						color[RED] = render->flatcolor[RED];
+						color[GREEN] = render->flatcolor[GREEN];
+						color[BLUE] = render->flatcolor[BLUE];
+						break;
+					}
+					case GZ_COLOR:
+					{
+						interpolateRGB(mRGB, bRGB, i, color);
+						break;
+					}
+					case GZ_NORMALS:
+					{
+						GzCoord normal;
+						interpolateNormals(mNormal, bNormal, i, normal);
+						shadingEquation(color, render, normal);
+						break;
+					}
+				}
 
 				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
 
