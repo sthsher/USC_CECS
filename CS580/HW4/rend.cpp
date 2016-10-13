@@ -731,9 +731,9 @@ int GzPutAttribute(GzRender	*render, int numAttributes, GzToken	*nameList,
 				render->ambientlight = *(static_cast<GzLight*>(valueList[i]));
 				if (DEBUG) printString("Ambient Light");
 				if (DEBUG) printString("Direction: ");
-				if (DEBUG) printCoord(render->lights[render->numlights - 1].direction);
+				if (DEBUG) printCoord(render->ambientlight.direction);
 				if (DEBUG) printString("Color:     ");
-				if (DEBUG) printColor(render->lights[render->numlights - 1].color);
+				if (DEBUG) printColor(render->ambientlight.color);
 				if (DEBUG) printString("\n");				
 				break;
 			}
@@ -1058,6 +1058,11 @@ float clampToZero(const float num)
 
 bool shadingEquation(GzColor &returnColor, GzRender *render, GzCoord normal)
 {
+	//clear returncolor
+	returnColor[RED] = 0;
+	returnColor[GREEN] = 0;
+	returnColor[BLUE] = 0;
+
 	GzColor specularColor;
 	GzColor diffuseColor;
 	GzColor ambientColor;
@@ -1072,7 +1077,15 @@ bool shadingEquation(GzColor &returnColor, GzRender *render, GzCoord normal)
 		GzCoord N, L, E;
 		equateGzCoord(N, normal);
 		equateGzCoord(L, render->lights[i].direction);
-		equateGzCoord(E, render->camera.position);
+
+		//equateGzCoord(E, render->camera.position);
+		//E[X] = render->camera.position[X] - render->camera.lookat[X];
+		//E[Y] = render->camera.position[Y] - render->camera.lookat[Y];
+		//E[Z] = render->camera.position[Z] - render->camera.lookat[Z];
+
+		E[X] = 0;
+		E[Y] = 0;
+		E[Z] = -1;
 
 		unitizeGzCoord(N);
 		unitizeGzCoord(L);
@@ -1160,9 +1173,20 @@ bool shadingEquation(GzColor &returnColor, GzRender *render, GzCoord normal)
 	ambientColor[BLUE] = render->Ka[BLUE] * render->ambientlight.color[BLUE];
 
 	//calculate color
-	returnColor[RED] = clampToZero(diffuseColor[RED]) + ambientColor[RED];
-	returnColor[GREEN] = clampToZero(diffuseColor[GREEN]) + ambientColor[GREEN];
-	returnColor[BLUE] = clampToZero(diffuseColor[BLUE]) + ambientColor[BLUE];
+	returnColor[RED] += clampToZero(diffuseColor[RED]);
+	returnColor[GREEN] += clampToZero(diffuseColor[GREEN]);
+	returnColor[BLUE] += clampToZero(diffuseColor[BLUE]);
+
+	//printString("Specular:");
+	//printColor(specularColor);
+	//printString("Diffuse:");
+	//printColor(diffuseColor);
+	//printString("Ambient:");
+	//printColor(ambientColor);
+
+	returnColor[RED] += ambientColor[RED];
+	returnColor[GREEN] += ambientColor[GREEN];
+	returnColor[BLUE] += ambientColor[BLUE];
 
 	returnColor[RED] += clampToZero(specularColor[RED]);
 	returnColor[GREEN] += clampToZero(specularColor[GREEN]);
