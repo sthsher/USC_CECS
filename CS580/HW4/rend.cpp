@@ -1078,11 +1078,6 @@ bool shadingEquation(GzColor &returnColor, GzRender *render, GzCoord normal)
 		equateGzCoord(N, normal);
 		equateGzCoord(L, render->lights[i].direction);
 
-		//equateGzCoord(E, render->camera.position);
-		//E[X] = render->camera.position[X] - render->camera.lookat[X];
-		//E[Y] = render->camera.position[Y] - render->camera.lookat[Y];
-		//E[Z] = render->camera.position[Z] - render->camera.lookat[Z];
-
 		E[X] = 0;
 		E[Y] = 0;
 		E[Z] = -1;
@@ -1094,9 +1089,6 @@ bool shadingEquation(GzColor &returnColor, GzRender *render, GzCoord normal)
 		float NdotL = calculateDotProduct(N, L);
 		float NdotE = calculateDotProduct(N, E);
 
-		//printString("NdotL: " + std::to_string(NdotL));
-		//printString("NdotE: " + std::to_string(NdotE));
-
 		if (NdotL > 0 && NdotE > 0)
 		{
 			//both positive
@@ -1106,9 +1098,14 @@ bool shadingEquation(GzColor &returnColor, GzRender *render, GzCoord normal)
 		{
 			//both negative
 			//flip normal and compute
-			normal[X] *= -1;
-			normal[Y] *= -1;
-			normal[Z] *= -1;
+			N[X] *= -1;
+			N[Y] *= -1;
+			N[Z] *= -1;
+
+			//Recompute dot products
+			NdotL = calculateDotProduct(N, L);
+			NdotE = calculateDotProduct(N, E);
+
 		}
 		else
 		{
@@ -1191,6 +1188,10 @@ bool shadingEquation(GzColor &returnColor, GzRender *render, GzCoord normal)
 	returnColor[RED] += clampToZero(specularColor[RED]);
 	returnColor[GREEN] += clampToZero(specularColor[GREEN]);
 	returnColor[BLUE] += clampToZero(specularColor[BLUE]);
+
+	if (returnColor[RED] > 1) returnColor[RED] = 1;
+	if (returnColor[GREEN] > 1) returnColor[GREEN] = 1;
+	if (returnColor[BLUE] > 1) returnColor[BLUE] = 1;
 
 	return true;
 }
