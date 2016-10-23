@@ -15,7 +15,7 @@
 #define SIDE 1
 #define BOT 2
 
-#define DEBUG true
+#define DEBUG false
 
 static const GzMatrix IDENTITY =
 {
@@ -375,26 +375,6 @@ void CalculateCamera(GzRender* render)
 
 	float z_length = calculateDistance(z_axis[X], z_axis[Y], z_axis[Z], 0, 0, 0);
 
-	/*
-	
-	calculateCross(camera->worldup, z_axis, x_axis);
-	float x_length = calculateDistance(x_axis[X], x_axis[Y], x_axis[Z], 0, 0, 0);
-
-	x_axis[X] = x_axis[X] / x_length;
-	x_axis[Y] = x_axis[Y] / x_length;
-	x_axis[Z] = x_axis[Z] / x_length;
-
-	console << "X dot Z: " << calculateDotProduct(x_axis[X], x_axis[Y], x_axis[Z], z_axis[X], z_axis[Y], z_axis[Z]) << std::endl;
-
-	calculateCross(z_axis, x_axis, y_axis);
-	float y_length = calculateDistance(y_axis[X], y_axis[Y], y_axis[Z], 0, 0, 0);
-
-	y_axis[X] = y_axis[X] / y_length;
-	y_axis[Y] = y_axis[Y] / y_length;
-	y_axis[Z] = y_axis[Z] / y_length;
-
-	*/
-
 	//Yaxis
 	float up_[3];
 	//float dot_product = calculateDotProduct(camera->worldup[X], camera->worldup[Y], camera->worldup[Z], z_axis[X], z_axis[Y], z_axis[Z]);
@@ -429,10 +409,6 @@ void CalculateCamera(GzRender* render)
 	x_length = calculateDistance(x_axis[X], x_axis[Y], x_axis[Z], 0, 0, 0);
 
 	//build Xwi
-	//float XC = calculateDotProduct(x_axis[X], x_axis[Y], x_axis[Z], camera->position[X], camera->position[Y], camera->position[Z]);
-	//float YC = calculateDotProduct(y_axis[X], y_axis[Y], y_axis[Z], camera->position[X], camera->position[Y], camera->position[Z]);
-	//float ZC = calculateDotProduct(z_axis[X], z_axis[Y], z_axis[Z], camera->position[X], camera->position[Y], camera->position[Z]);
-
 	float XC = calculateDotProduct(x_axis, camera->position);
 	float YC = calculateDotProduct(y_axis, camera->position);
 	float ZC = calculateDotProduct(z_axis, camera->position);
@@ -461,40 +437,6 @@ void CalculateCamera(GzRender* render)
 
 	GzPushMatrix(render, XpiTranspose);
 	GzPushMatrix(render, XiwTranspose);
-
-
-	/*
-	//push Xpi Norm
-	GzPushMatrixXnorm(render, IDENTITY_T);
-
-	//push Xiw
-	GzMatrix normIW;
-	equateMatrix(normIW, render->camera.Xiw);
-	
-	//clear transpose
-	normIW[3][0] = 0;
-	normIW[3][1] = 0;
-	normIW[3][2] = 0;
-
-	//unitary
-	float K = sqrt(pow(normIW[0][0], 2) + pow(normIW[1][0], 2) + pow(normIW[2][0], 2));
-	for (int i = 0; i < 3; ++i)
-	{
-		for (int j = 0; j < 3; ++j)
-		{
-			normIW[i][j] = normIW[i][j] / K;
-		}
-	}
-
-	if (DEBUG) printString("normIW");
-	if (DEBUG) printMatrix(normIW);
-
-	//push to stack
-	GzMatrix normIWTranspose;
-	transposeMatrix(normIW, normIWTranspose);
-	GzPushMatrixXnorm(render, normIWTranspose);
-
-	*/
 }
 
 int GzPutCamera(GzRender *render, GzCamera *camera)
@@ -517,76 +459,6 @@ int GzPutCamera(GzRender *render, GzCamera *camera)
 	return GZ_SUCCESS;
 
 }
-
-/*
-//matrix has to be transposed
-int GzPushMatrixXnorm(GzRender *render, const GzMatrix matrix)
-{
-	
-	//- push a matrix onto the Xnorm stack
-	//- check for stack overflow
-	
-	//transpose the matrix first
-	//Get the norm matrix
-	GzMatrix transposed;
-	transposeMatrix(matrix, transposed);
-
-	if (normlevel == MATLEVELS - 1)
-	{
-		return GZ_FAILURE;
-	}
-
-	if (normlevel == 0)
-	{
-		for (int i = 0; i < 4; ++i)
-		{
-			for (int j = 0; j < 4; ++j)
-			{
-				(render->Xnorm[normlevel])[i][j] = transposed[i][j];
-			}
-		}
-		++normlevel;
-	}
-
-	else
-	{
-		for (int i = 0; i < 4; ++i)
-		{
-			for (int j = 0; j < 4; ++j)
-			{
-				float value = 0;
-				for (int x = 0; x < 4; ++x)
-				{
-					value += (render->Xnorm[normlevel - 1][x][j] * transposed[i][x]);
-				}
-				render->Xnorm[normlevel][i][j] = value;
-			}
-		}
-		++normlevel;
-	}
-
-	return GZ_SUCCESS;
-}
-
-int GzPopMatrixXnorm()
-{
-	
-	//- pop a matrix off the Ximage stack
-	//- check for stack underflow
-	
-
-	if (normlevel == 0)
-	{
-		return GZ_FAILURE;
-	}
-
-	--normlevel;
-
-	return GZ_SUCCESS;
-
-}
-
-*/
 
 //matrix has to be transposed
 int GzPushMatrix(GzRender *render, GzMatrix	matrix)
@@ -625,9 +497,6 @@ int GzPushMatrix(GzRender *render, GzMatrix	matrix)
 		}
 	}
 
-	if (DEBUG) printString("Pushing to XNorm");
-	if (DEBUG) printMatrix(normMat);
-
 	if (render->matlevel == MATLEVELS - 1)
 	{
 		return GZ_FAILURE;
@@ -665,10 +534,6 @@ int GzPushMatrix(GzRender *render, GzMatrix	matrix)
 		}
 		++render->matlevel;
 	}
-
-	if (DEBUG) printString("Top of Xnorm");
-	if (DEBUG) printMatrix(render->Xnorm[render->matlevel - 1]);
-
 	return GZ_SUCCESS;
 }
 
@@ -717,24 +582,11 @@ int GzPutAttribute(GzRender	*render, int numAttributes, GzToken	*nameList,
 
 				//add to renderer
 				render->lights[render->numlights++] = newLight;
-
-				if (DEBUG) printString("DIRECTIONAL LIGHT");
-				if (DEBUG) printString("Direction: ");
-				if (DEBUG) printCoord(render->lights[render->numlights-1].direction);
-				if (DEBUG) printString("Color:     ");
-				if (DEBUG) printColor(render->lights[render->numlights-1].color);
-				if (DEBUG) printString("\n");
 				break;
 			}
 			case GZ_AMBIENT_LIGHT:
 			{
-				render->ambientlight = *(static_cast<GzLight*>(valueList[i]));
-				if (DEBUG) printString("Ambient Light");
-				if (DEBUG) printString("Direction: ");
-				if (DEBUG) printCoord(render->ambientlight.direction);
-				if (DEBUG) printString("Color:     ");
-				if (DEBUG) printColor(render->ambientlight.color);
-				if (DEBUG) printString("\n");				
+				render->ambientlight = *(static_cast<GzLight*>(valueList[i]));				
 				break;
 			}
 			case GZ_DIFFUSE_COEFFICIENT:
@@ -742,11 +594,6 @@ int GzPutAttribute(GzRender	*render, int numAttributes, GzToken	*nameList,
 				render->Kd[RED] = (*static_cast<GzColor*>(valueList[i]))[RED];
 				render->Kd[GREEN] = (*static_cast<GzColor*>(valueList[i]))[GREEN];
 				render->Kd[BLUE] = (*static_cast<GzColor*>(valueList[i]))[BLUE];
-
-				if (DEBUG) printString("Diffuse Coefficient Kd:");
-				if (DEBUG) printCoord(render->Kd);
-				if (DEBUG) printString("\n");
-
 				break;
 			}
 			case GZ_AMBIENT_COEFFICIENT:
@@ -754,11 +601,6 @@ int GzPutAttribute(GzRender	*render, int numAttributes, GzToken	*nameList,
 				render->Ka[RED] = (*static_cast<GzColor*>(valueList[i]))[RED];
 				render->Ka[GREEN] = (*static_cast<GzColor*>(valueList[i]))[GREEN];
 				render->Ka[BLUE] = (*static_cast<GzColor*>(valueList[i]))[BLUE];
-
-				if (DEBUG) printString("Ambient Coefficient Ka:");
-				if (DEBUG) printCoord(render->Ka);
-				if (DEBUG) printString("\n");
-
 				break;
 			}
 			case GZ_SPECULAR_COEFFICIENT:
@@ -766,37 +608,17 @@ int GzPutAttribute(GzRender	*render, int numAttributes, GzToken	*nameList,
 				render->Ks[RED] = (*static_cast<GzColor*>(valueList[i]))[RED];
 				render->Ks[GREEN] = (*static_cast<GzColor*>(valueList[i]))[GREEN];
 				render->Ks[BLUE] = (*static_cast<GzColor*>(valueList[i]))[BLUE];
-
-				if (DEBUG) printString("Specular Coefficient Ks:");
-				if (DEBUG) printCoord(render->Ks);
-				if (DEBUG) printString("\n");
-
 				break;
 			}
 			case GZ_DISTRIBUTION_COEFFICIENT:
 			{
 				render->spec = (*static_cast<float*>(valueList[i]));
-
-				if (DEBUG) printString("Distribution Coefficient SPEC:");
-				if (DEBUG) printString( std::to_string(render->spec));
-				if (DEBUG) printString("\n");
-
 				break;
 			}
 
 			case GZ_INTERPOLATE:
 			{
 				render->interp_mode = (*static_cast<int*>(valueList[i]));
-				if (DEBUG) printString("Interpolate Mode:");
-				if (render->interp_mode == GZ_COLOR)
-				{
-					if (DEBUG) printString("Gouraud Shading");
-				}
-				else if (render->interp_mode == GZ_NORMALS)
-				{
-					if (DEBUG) printString("Phong Shanding");
-				}
-				if (DEBUG) printString("\n");
 				break;
 			}
 		}
@@ -1105,7 +927,6 @@ bool shadingEquation(GzColor &returnColor, GzRender *render, GzCoord normal)
 			//Recompute dot products
 			NdotL = calculateDotProduct(N, L);
 			NdotE = calculateDotProduct(N, E);
-
 		}
 		else
 		{
@@ -1142,9 +963,6 @@ bool shadingEquation(GzColor &returnColor, GzRender *render, GzCoord normal)
 			specSum[GREEN] += render->lights[i].color[GREEN] * pow;
 			specSum[BLUE] += render->lights[i].color[BLUE] * pow;
 
-			//if (DEBUG) printString("Specular");
-			//if (DEBUG) printColor(specularColor);
-
 			//Diffuse
 			//Kd * SUM (le (N DOT L)
 
@@ -1173,13 +991,6 @@ bool shadingEquation(GzColor &returnColor, GzRender *render, GzCoord normal)
 	returnColor[RED] += clampToZero(diffuseColor[RED]);
 	returnColor[GREEN] += clampToZero(diffuseColor[GREEN]);
 	returnColor[BLUE] += clampToZero(diffuseColor[BLUE]);
-
-	//printString("Specular:");
-	//printColor(specularColor);
-	//printString("Diffuse:");
-	//printColor(diffuseColor);
-	//printString("Ambient:");
-	//printColor(ambientColor);
 
 	returnColor[RED] += ambientColor[RED];
 	returnColor[GREEN] += ambientColor[GREEN];
@@ -1255,27 +1066,15 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 	}
 
 	//calculate color
-
-
-
 	if (render->interp_mode == GZ_COLOR)
 	{
 		//Gouraud Shading, calculate color at each vertex
 		if (!shadingEquation(colorA, render, normalA)) return GZ_FAILURE;
 		if (!shadingEquation(colorB, render, normalB)) return GZ_FAILURE;
 		if (!shadingEquation(colorC, render, normalC)) return GZ_FAILURE;
-
-		//if (DEBUG) printString("colorA:");
-		//if (DEBUG) printColor(colorA);
-		//if (DEBUG) printString("colorB:");
-		//if (DEBUG) printColor(colorB);
-		//if (DEBUG) printString("colorC:");
-		//if (DEBUG) printColor(colorC);
 	}
 
-
 	//render
-
 	//find the points of interest, in form of [topmost, left, right]
 	GzCoord vertices[3];
 	GzCoord normals[3];
@@ -1466,6 +1265,9 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 		float xLeft = 0;
 		float xRight = 0;
 
+		//For Flat
+		GzCoord triNormal;
+
 		//For Gouraud
 		float mainRGBSlopes[3];
 		float RGBSlopesA[3];
@@ -1509,6 +1311,25 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 			calculateNormalIntercepts(mainNormalSlopes, normals[TOP], vertices[TOP][Y], normalInterceptsM);
 			calculateNormalIntercepts(normalSlopesA, normals[TOP], vertices[TOP][Y], normalInterceptsA);
 			calculateNormalIntercepts(normalSlopesB, normals[RIGHT], vertices[RIGHT][Y], normalInterceptsB);
+		}
+		else if (render->interp_mode == GZ_FLAT)
+		{
+			//calculate the normal
+			GzCoord vecA;
+			vecA[X] = vertices[TOP][X] - vertices[LEFT][X];
+			vecA[Y] = vertices[TOP][Y] - vertices[LEFT][Y];
+			vecA[Z] = vertices[TOP][Z] - vertices[LEFT][Z];
+
+			GzCoord vecB;
+			vecB[X] = vertices[LEFT][X] - vertices[RIGHT][X];
+			vecB[Y] = vertices[LEFT][Y] - vertices[RIGHT][Y];
+			vecB[Z] = vertices[LEFT][Z] - vertices[RIGHT][Z];
+
+			triNormal[X] = (vecA[Y] * vecB[Z]) - (vecA[Z] * vecB[Y]);
+			triNormal[Y] = (vecA[Z] * vecB[X]) - (vecA[X] * vecB[Z]);
+			triNormal[Z] = (vecA[X] * vecB[Y]) - (vecA[Y] * vecB[X]);
+
+			shadingEquation(render->flatcolor, render, triNormal);
 		}
 
 		//scan set 1
@@ -1573,7 +1394,6 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 						break;
 					}
 				}
-
 				GzPutDisplay(render->display, i, j, ctoi(color[RED]), ctoi(color[GREEN]), ctoi(color[BLUE]), 1, Z_);
 			}
 
@@ -1734,6 +1554,9 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 		float xLeft = 0;
 		float xRight = 0;
 
+		//For Flat
+		GzCoord triNormal;
+
 		//For Gouraud
 		float RGBinterceptsM[3];
 		float RGBinterceptsA[3];
@@ -1777,6 +1600,25 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 			calculateNormalIntercepts(mainNormalSlopes, normals[TOP], vertices[TOP][Y], normalInterceptsM);
 			calculateNormalIntercepts(normalSlopesA, normals[TOP], vertices[TOP][Y], normalInterceptsA);
 			calculateNormalIntercepts(normalSlopesB, normals[LEFT], vertices[LEFT][Y], normalInterceptsB);
+		}
+		else if (render->interp_mode == GZ_FLAT)
+		{
+			//calculate the normal
+			GzCoord vecA;
+			vecA[X] = vertices[TOP][X] - vertices[LEFT][X];
+			vecA[Y] = vertices[TOP][Y] - vertices[LEFT][Y];
+			vecA[Z] = vertices[TOP][Z] - vertices[LEFT][Z];
+
+			GzCoord vecB;
+			vecB[X] = vertices[LEFT][X] - vertices[RIGHT][X];
+			vecB[Y] = vertices[LEFT][Y] - vertices[RIGHT][Y];
+			vecB[Z] = vertices[LEFT][Z] - vertices[RIGHT][Z];
+
+			triNormal[X] = (vecA[Y] * vecB[Z]) - (vecA[Z] * vecB[Y]);
+			triNormal[Y] = (vecA[Z] * vecB[X]) - (vecA[X] * vecB[Z]);
+			triNormal[Z] = (vecA[X] * vecB[Y]) - (vecA[Y] * vecB[X]);
+
+			shadingEquation(render->flatcolor, render, triNormal);
 		}
 
 		//scan set 1
