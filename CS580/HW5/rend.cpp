@@ -934,15 +934,153 @@ float clampToZero(const float num)
 	}
 }
 
-float perspectiveSpace(const float parameter, const float zPrime)
+void perspectiveSpace(float* parameter, const float z, const int n)
 {
-	return (parameter / (zPrime + 1));
+	float zPrime = z / (MAXINT - z);
+	for (int i = 0; i < n; ++i)
+	{
+		parameter[i] = (parameter[i] / (zPrime + 1));
+	}
 }
 
-float affineSpace(const float pPrime, const float zPrime)
+void affineSpace(float* pPrime, const float z, const int n)
 {
-	return pPrime * (zPrime + 1);
+	float zPrime = z / (MAXINT - z);
+	for (int i = 0; i < n; ++i)
+	{
+		pPrime[i] = pPrime[i] * (zPrime + 1);
+	}
 }
+
+bool lightIntensityInterpolation(GzColor &returnColor, GzRender *render, GzCoord normal)
+{
+	//clear returncolor
+	returnColor[RED] = 0;
+	returnColor[GREEN] = 0;
+	returnColor[BLUE] = 0;
+
+	GzColor specularColor;
+	GzColor diffuseColor;
+	GzColor ambientColor;
+
+	GzColor specSum = { 0,0,0 };
+	GzColor diffSum = { 0,0,0 };
+
+	for (int i = 0; i < render->numlights; ++i)
+	{
+		bool skip = false;
+		//precompute N dot L and N dot E
+		GzCoord N, L, E;
+		equateGzCoord(N, normal);
+		equateGzCoord(L, render->lights[i].direction);
+
+		E[X] = 0;
+		E[Y] = 0;
+		E[Z] = -1;
+
+		unitizeGzCoord(N);
+		unitizeGzCoord(L);
+		unitizeGzCoord(E);
+
+		float NdotL = calculateDotProduct(N, L);
+		float NdotE = calculateDotProduct(N, E);
+
+		if (NdotL > 0 && NdotE > 0)
+		{
+			//both positive
+			//do nothing
+		}
+		else if (NdotL < 0 && NdotE < 0)
+		{
+			//both negative
+			//flip normal and compute
+			N[X] *= -1;
+			N[Y] *= -1;
+			N[Z] *= -1;
+
+			//Recompute dot products
+			NdotL = calculateDotProduct(N, L);
+			NdotE = calculateDotProduct(N, E);
+		}
+		else
+		{
+			//different sign, skip this
+			skip = true;
+		}
+
+		if (!skip)
+		{
+			//Specular
+			//Ks * SUM (le * (R DOT E)^ S)
+			//R = 2(N DOT L)N - L
+			float dot = NdotL;
+			dot *= 2;
+			N[0] *= dot;
+			N[1] *= dot;
+			N[2] *= dot;
+
+			GzCoord R;
+			R[0] = N[0] - L[0];
+			R[1] = N[1] - L[1];
+			R[2] = N[2] - L[2];
+
+			unitizeGzCoord(R);
+
+			float RdotE = calculateDotProduct(R, E);
+			if (RdotE < 0) RdotE = 0;
+
+			float pow = std::pow(RdotE, render->spec);
+
+			//printString("RdotE: " + std::to_string(RdotE));
+
+			specSum[RED] += render->lights[i].color[RED] * pow;
+			specSum[GREEN] += render->lights[i].color[GREEN] * pow;
+			specSum[BLUE] += render->lights[i].color[BLUE] * pow;
+
+			//Diffuse
+			//Kd * SUM (le (N DOT L)
+
+			diffSum[RED] += render->lights[i].color[RED] * NdotL;
+			diffSum[GREEN] += render->lights[i].color[GREEN] * NdotL;
+			diffSum[BLUE] += render->lights[i].color[BLUE] * NdotL;
+		}
+	}
+
+	specularColor[RED] = specSum[RED];
+	specularColor[GREEN] =specSum[GREEN];
+	specularColor[BLUE] = specSum[BLUE];
+
+	diffuseColor[RED] = diffSum[RED];
+	diffuseColor[GREEN] = diffSum[GREEN];
+	diffuseColor[BLUE] = diffSum[BLUE];
+
+
+	//Ambient
+	// Ka * la
+	ambientColor[RED] = render->ambientlight.color[RED];
+	ambientColor[GREEN] = render->ambientlight.color[GREEN];
+	ambientColor[BLUE] = render->ambientlight.color[BLUE];
+
+	//calculate color
+	returnColor[RED] += clampToZero(diffuseColor[RED]);
+	returnColor[GREEN] += clampToZero(diffuseColor[GREEN]);
+	returnColor[BLUE] += clampToZero(diffuseColor[BLUE]);
+
+	returnColor[RED] += ambientColor[RED];
+	returnColor[GREEN] += ambientColor[GREEN];
+	returnColor[BLUE] += ambientColor[BLUE];
+
+	returnColor[RED] += clampToZero(specularColor[RED]);
+	returnColor[GREEN] += clampToZero(specularColor[GREEN]);
+	returnColor[BLUE] += clampToZero(specularColor[BLUE]);
+
+	if (returnColor[RED] > 1) returnColor[RED] = 1;
+	if (returnColor[GREEN] > 1) returnColor[GREEN] = 1;
+	if (returnColor[BLUE] > 1) returnColor[BLUE] = 1;
+
+	return true;
+}
+
 
 bool shadingEquation(GzColor &returnColor, GzRender *render, GzCoord normal)
 {
@@ -1135,25 +1273,22 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				equateGzTextureIndex(textureA, (static_cast<GzTextureIndex*>(valueList[p]))[0]);
 				equateGzTextureIndex(textureB, (static_cast<GzTextureIndex*>(valueList[p]))[1]);
 				equateGzTextureIndex(textureC, (static_cast<GzTextureIndex*>(valueList[p]))[2]);
-
-				//scale
-				//textureA[U] *= (render->display->xres) - 1;
-				//textureA[V] *= (render->display->yres) - 1;
-				//textureB[U] *= (render->display->xres) - 1;
-				//textureB[V] *= (render->display->yres) - 1;
-				//textureC[U] *= (render->display->xres) - 1;
-				//textureC[V] *= (render->display->yres) - 1;
 			}
 		}
 	}
+
+	//Perspective Correction
+	perspectiveSpace(textureA, vertexA[Z], 2);
+	perspectiveSpace(textureB, vertexB[Z], 2);
+	perspectiveSpace(textureC, vertexC[Z], 2);
 
 	//calculate color
 	if (render->interp_mode == GZ_COLOR)
 	{
 		//Gouraud Shading, calculate color at each vertex
-		if (!shadingEquation(colorA, render, normalA)) return GZ_FAILURE;
-		if (!shadingEquation(colorB, render, normalB)) return GZ_FAILURE;
-		if (!shadingEquation(colorC, render, normalC)) return GZ_FAILURE;
+		if (!lightIntensityInterpolation(colorA, render, normalA)) return GZ_FAILURE;
+		if (!lightIntensityInterpolation(colorB, render, normalB)) return GZ_FAILURE;
+		if (!lightIntensityInterpolation(colorC, render, normalC)) return GZ_FAILURE;
 	}
 
 	//render
@@ -1509,6 +1644,9 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				GzTextureIndex texture;
 				interpolateTexture(mTexture, bTexture, i, texture);
 
+				//persepctive correction
+				affineSpace(texture, Z_, 2);
+
 				render->tex_fun(texture[U], texture[V], color);
 
 				switch (render->interp_mode)
@@ -1522,7 +1660,13 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 					}
 					case GZ_COLOR:
 					{
-						interpolateRGB(mRGB, bRGB, i, color);
+						//for Gourand shading, set kd, ka, and ks all to the texture color
+						GzColor interpolatedColor;
+						interpolateRGB(mRGB, bRGB, i, interpolatedColor);
+
+						color[RED] *= interpolatedColor[RED];
+						color[GREEN] *= interpolatedColor[GREEN];
+						color[BLUE] *= interpolatedColor[BLUE];
 						break;
 					}
 					case GZ_NORMALS:
@@ -1560,10 +1704,10 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				GzTextureIndex texture;
 				interpolateTexture(mTexture, bTexture, i, texture);
 
+				//persepctive correction
+				affineSpace(texture, Z_, 2);
+
 				render->tex_fun(texture[U], texture[V], color);
-				//for Phong shading, set kd and ka
-				equateGzColor(render->Ka, color);
-				equateGzColor(render->Kd, color);
 
 				switch (render->interp_mode)
 				{
@@ -1576,11 +1720,21 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 					}
 					case GZ_COLOR:
 					{
-						interpolateRGB(mRGB, bRGB, i, color);
+						//for Gourand shading, set kd, ka, and ks all to the texture color
+						GzColor interpolatedColor;
+						interpolateRGB(mRGB, bRGB, i, interpolatedColor);
+
+						color[RED] *= interpolatedColor[RED];
+						color[GREEN] *= interpolatedColor[GREEN];
+						color[BLUE] *= interpolatedColor[BLUE];
 						break;
 					}
 					case GZ_NORMALS:
 					{
+						//for Phong shading, set kd and ka
+						equateGzColor(render->Ka, color);
+						equateGzColor(render->Kd, color);
+
 						GzCoord normal;
 						interpolateNormals(mNormal, bNormal, i, normal);
 						shadingEquation(color, render, normal);
@@ -1646,10 +1800,10 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				GzTextureIndex texture;
 				interpolateTexture(mTexture, bTexture, i, texture);
 
+				//persepctive correction
+				affineSpace(texture, Z_, 2);
+
 				render->tex_fun(texture[U], texture[V], color);
-				//for Phong shading, set kd and ka
-				equateGzColor(render->Ka, color);
-				equateGzColor(render->Kd, color);
 
 				switch (render->interp_mode)
 				{
@@ -1662,11 +1816,21 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 					}
 					case GZ_COLOR:
 					{
-						interpolateRGB(mRGB, bRGB, i, color);
+						//for Gourand shading, set kd, ka, and ks all to the texture color
+						GzColor interpolatedColor;
+						interpolateRGB(mRGB, bRGB, i, interpolatedColor);
+
+						color[RED] *= interpolatedColor[RED];
+						color[GREEN] *= interpolatedColor[GREEN];
+						color[BLUE] *= interpolatedColor[BLUE];
 						break;
 					}
 					case GZ_NORMALS:
 					{
+						//for Phong shading, set kd and ka
+						equateGzColor(render->Ka, color);
+						equateGzColor(render->Kd, color);
+
 						GzCoord normal;
 						interpolateNormals(mNormal, bNormal, i, normal);
 						shadingEquation(color, render, normal);
@@ -1688,10 +1852,10 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				GzTextureIndex texture;
 				interpolateTexture(mTexture, bTexture, i, texture);
 
+				//persepctive correction
+				affineSpace(texture, Z_, 2);
+
 				render->tex_fun(texture[U], texture[V], color);
-				//for Phong shading, set kd and ka
-				equateGzColor(render->Ka, color);
-				equateGzColor(render->Kd, color);
 
 				switch (render->interp_mode)
 				{
@@ -1704,11 +1868,21 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 					}
 					case GZ_COLOR:
 					{
-						interpolateRGB(mRGB, bRGB, i, color);
+						//for Gourand shading, set kd, ka, and ks all to the texture color
+						GzColor interpolatedColor;
+						interpolateRGB(mRGB, bRGB, i, interpolatedColor);
+
+						color[RED] *= interpolatedColor[RED];
+						color[GREEN] *= interpolatedColor[GREEN];
+						color[BLUE] *= interpolatedColor[BLUE];
 						break;
 					}
 					case GZ_NORMALS:
 					{
+						//for Phong shading, set kd and ka
+						equateGzColor(render->Ka, color);
+						equateGzColor(render->Kd, color);
+
 						GzCoord normal;
 						interpolateNormals(mNormal, bNormal, i, normal);
 						shadingEquation(color, render, normal);
@@ -1887,10 +2061,10 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				GzTextureIndex texture;
 				interpolateTexture(mTexture, bTexture, i, texture);
 
+				//persepctive correction
+				affineSpace(texture, Z_, 2);
+
 				render->tex_fun(texture[U], texture[V], color);
-				//for Phong shading, set kd and ka
-				equateGzColor(render->Ka, color);
-				equateGzColor(render->Kd, color);
 
 				switch (render->interp_mode)
 				{
@@ -1903,11 +2077,21 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 					}
 					case GZ_COLOR:
 					{
-						interpolateRGB(mRGB, bRGB, i, color);
+						//for Gourand shading, set kd, ka, and ks all to the texture color
+						GzColor interpolatedColor;
+						interpolateRGB(mRGB, bRGB, i, interpolatedColor);
+
+						color[RED] *= interpolatedColor[RED];
+						color[GREEN] *= interpolatedColor[GREEN];
+						color[BLUE] *= interpolatedColor[BLUE];
 						break;
 					}
 					case GZ_NORMALS:
 					{
+						//for Phong shading, set kd and ka
+						equateGzColor(render->Ka, color);
+						equateGzColor(render->Kd, color);
+
 						GzCoord normal;
 						interpolateNormals(mNormal, bNormal, i, normal);
 						shadingEquation(color, render, normal);
@@ -1929,10 +2113,10 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				GzTextureIndex texture;
 				interpolateTexture(mTexture, bTexture, i, texture);
 
+				//persepctive correction
+				affineSpace(texture, Z_, 2);
+
 				render->tex_fun(texture[U], texture[V], color);
-				//for Phong shading, set kd and ka
-				equateGzColor(render->Ka, color);
-				equateGzColor(render->Kd, color);
 
 				switch (render->interp_mode)
 				{
@@ -1945,11 +2129,21 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 					}
 					case GZ_COLOR:
 					{
-						interpolateRGB(mRGB, bRGB, i, color);
+						//for Gourand shading, set kd, ka, and ks all to the texture color
+						GzColor interpolatedColor;
+						interpolateRGB(mRGB, bRGB, i, interpolatedColor);
+
+						color[RED] *= interpolatedColor[RED];
+						color[GREEN] *= interpolatedColor[GREEN];
+						color[BLUE] *= interpolatedColor[BLUE];
 						break;
 					}
 					case GZ_NORMALS:
 					{
+						//for Phong shading, set kd and ka
+						equateGzColor(render->Ka, color);
+						equateGzColor(render->Kd, color);
+
 						GzCoord normal;
 						interpolateNormals(mNormal, bNormal, i, normal);
 						shadingEquation(color, render, normal);
@@ -2014,11 +2208,10 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				GzTextureIndex texture;
 				interpolateTexture(mTexture, bTexture, i, texture);
 
-				render->tex_fun(texture[U], texture[V], color);
-				//for Phong shading, set kd and ka
-				equateGzColor(render->Ka, color);
-				equateGzColor(render->Kd, color);
+				//persepctive correction
+				affineSpace(texture, Z_, 2);
 
+				render->tex_fun(texture[U], texture[V], color);
 
 				switch (render->interp_mode)
 				{
@@ -2031,11 +2224,21 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 					}
 					case GZ_COLOR:
 					{
-						interpolateRGB(mRGB, bRGB, i, color);
+						//for Gourand shading, set kd, ka, and ks all to the texture color
+						GzColor interpolatedColor;
+						interpolateRGB(mRGB, bRGB, i, interpolatedColor);
+
+						color[RED] *= interpolatedColor[RED];
+						color[GREEN] *= interpolatedColor[GREEN];
+						color[BLUE] *= interpolatedColor[BLUE];
 						break;
 					}
 					case GZ_NORMALS:
 					{
+						//for Phong shading, set kd and ka
+						equateGzColor(render->Ka, color);
+						equateGzColor(render->Kd, color);
+
 						GzCoord normal;
 						interpolateNormals(mNormal, bNormal, i, normal);
 						shadingEquation(color, render, normal);
@@ -2058,10 +2261,10 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				GzTextureIndex texture;
 				interpolateTexture(mTexture, bTexture, i, texture);
 
+				//persepctive correction
+				affineSpace(texture, Z_, 2);
+
 				render->tex_fun(texture[U], texture[V], color);
-				//for Phong shading, set kd and ka
-				equateGzColor(render->Ka, color);
-				equateGzColor(render->Kd, color);
 
 				switch (render->interp_mode)
 				{
@@ -2074,11 +2277,21 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 					}
 					case GZ_COLOR:
 					{
-						interpolateRGB(mRGB, bRGB, i, color);
+						//for Gourand shading, set kd, ka, and ks all to the texture color
+						GzColor interpolatedColor;
+						interpolateRGB(mRGB, bRGB, i, interpolatedColor);
+
+						color[RED] *= interpolatedColor[RED];
+						color[GREEN] *= interpolatedColor[GREEN];
+						color[BLUE] *= interpolatedColor[BLUE];
 						break;
 					}
 					case GZ_NORMALS:
 					{
+						//for Phong shading, set kd and ka
+						equateGzColor(render->Ka, color);
+						equateGzColor(render->Kd, color);
+
 						GzCoord normal;
 						interpolateNormals(mNormal, bNormal, i, normal);
 						shadingEquation(color, render, normal);
