@@ -3,26 +3,14 @@
 #include	"stdio.h"
 #include	"Gz.h"
 #include	"math.h"
+#include	<fstream>
 
 GzColor	*image=NULL;
 int xs, ys;
 int reset = 1;
 
-#include <fstream>
 
 #define	ARRAY(x,y,xres)	(x+(y*xres))	
-
-void pC(GzColor c)
-{
-	std::ofstream console("console.txt", std::ios::app);
-	console << "[";
-	for (int i = 0; i < 3; ++i)
-	{
-		console << c[i] << " ";
-	}
-	console << "]";
-	console << std::endl;
-}
 
 void equateColor(GzColor& lhs, const GzCoord rhs)
 {
@@ -35,7 +23,6 @@ void equateColor(GzColor& lhs, const GzCoord rhs)
 int tex_fun(float u, float v, GzColor color)
 {
 
-	std::ofstream console("console.txt", std::ios::app);
 	unsigned char		pixel[3];
 	unsigned char     dummy;
 	char  		foo[8];
@@ -45,7 +32,6 @@ int tex_fun(float u, float v, GzColor color)
 	if (reset) {          /* open and load texture file */
 		fd = fopen ("texture", "rb");
 		if (fd == NULL) {
-		console << "EXIT\n";
 
 			exit(-1);
 		}
