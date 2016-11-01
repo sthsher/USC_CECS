@@ -31,6 +31,11 @@ typedef struct {			/* define a renderer */
   GzColor		Ka, Kd, Ks;
   float		    spec;		/* specular power */
   GzTexture		tex_fun;    /* tex_fun(float u, float v, GzColor color) */
+
+  //HW6
+  float Xoffset;
+  float Yoffset;
+  float weight;
 }  GzRender;
 #endif
 

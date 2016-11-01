@@ -11,7 +11,7 @@
 #include "ScaleDlg.h"
 
 #include "disp.h"
-#include "Application6.h"
+#include "Application5.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -100,9 +100,9 @@ void CCS580HWView::OnRender()
 
 	// Call renderer 
 
-	// Application 6
+	// Application 5
 	if(m_pApplication != NULL)
-		((Application6 *)m_pApplication)->Render();
+		((Application5 *)m_pApplication)->Render();
 	else 
 		AfxMessageBox("Application was not allocated\n");
 
@@ -176,11 +176,11 @@ void CCS580HWView::OnInitialUpdate()
 	// Assign Application 5
 	if(m_pApplication == NULL)
 	{
-		m_pApplication = new Application6;
+		m_pApplication = new Application5;
 	}
 	
 	// Initialize and begin renderer
-	((Application6 *)m_pApplication)->Initialize();
+	((Application5 *)m_pApplication)->Initialize();
 }
 
 // Callback function for rotation  
@@ -230,7 +230,10 @@ void CCS580HWView::OnRotate()
 		}
 
 		// Accumulate matrix
-		GzPushMatrix(m_pApplication->m_pRender, rotMat); 
+		for (int i = 0; i < AAKERNEL_SIZE; ++i)
+		{
+			GzPushMatrix(m_pApplication->m_pRender[i], rotMat);
+		}
 	}
 }
 
@@ -267,7 +270,10 @@ void CCS580HWView::OnTranslate()
 		GzTrxMat(input->translation, trxMat);
 
 		// Accumulate matrix
-		GzPushMatrix(m_pApplication->m_pRender, trxMat); 
+		for (int i = 0; i < AAKERNEL_SIZE; ++i)
+		{
+			GzPushMatrix(m_pApplication->m_pRender[i], trxMat);
+		}
 	}
 }
 
@@ -304,6 +310,9 @@ void CCS580HWView::OnScale()
 		GzScaleMat(input->scale, scaleMat);
 
 		// Accumulate matrix
-		GzPushMatrix(m_pApplication->m_pRender, scaleMat); 
+		for (int i = 0; i < AAKERNEL_SIZE; ++i)
+		{
+			GzPushMatrix(m_pApplication->m_pRender[i], scaleMat);
+		}
 	}
 }

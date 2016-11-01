@@ -19,6 +19,9 @@
 
 #define	GZ_AASHIFTX	44	/* antialiasing screen offset */
 #define	GZ_AASHIFTY	45	/* antialiasing screen offset */
+#define GZ_AAWEIGHT 46  /* antialiasing screen weight */
+
+#define AAKERNEL_SIZE 6
 
 /* renderer-state default pixel color */
 #define GZ_RGB_COLOR            99	
@@ -50,6 +53,9 @@ typedef short   GzIntensity;	/* 0 - 4095 in lower 12-bits */
 typedef float   GzCoord[3];
 typedef float   GzTextureIndex[2];
 typedef float   GzMatrix[4][4];
+
+typedef float GzOffset[3];
+
 typedef int	GzDepth;		/* z is signed for clipping */
 
 typedef	int	(*GzTexture)(float u, float v, GzColor color);	/* pointer to texture sampling method */

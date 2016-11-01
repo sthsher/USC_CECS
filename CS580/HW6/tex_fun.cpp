@@ -5,7 +5,7 @@
 #include	"math.h"
 #include	<fstream>
 
-GzColor	*image=NULL;
+GzColor	*image = NULL;
 int xs, ys;
 int reset = 1;
 
@@ -105,8 +105,11 @@ int ptex_fun(float u, float v, GzColor color)
 /* Free texture memory */
 int GzFreeTexture()
 {
-	if(image!=NULL)
+	if (image != NULL)
+	{
 		free(image);
+		image == NULL;
+	}
 	return GZ_SUCCESS;
 }
 

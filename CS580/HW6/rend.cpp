@@ -628,9 +628,29 @@ int GzPutAttribute(GzRender	*render, int numAttributes, GzToken	*nameList,
 				render->interp_mode = (*static_cast<int*>(valueList[i]));
 				break;
 			}
+			
 			case GZ_TEXTURE_MAP:
 			{
 				render->tex_fun = static_cast<GzTexture>(valueList[i]);
+				break;
+			}
+			
+			case GZ_AASHIFTX:
+			{
+				render->Xoffset = *(static_cast<float*>(valueList[i]));
+				break;
+			}
+
+			case GZ_AASHIFTY:
+			{
+				render->Yoffset = *(static_cast<float*>(valueList[i]));
+				break;
+			}
+
+			case GZ_AAWEIGHT:
+			{
+				render->weight = *(static_cast<float*>(valueList[i]));
+				break;
 			}
 		}
 	}
@@ -1207,6 +1227,12 @@ bool shadingEquation(GzColor &returnColor, GzRender *render, GzCoord normal)
 	return true;
 }
 
+void applyOffsets(const GzRender* render, GzCoord& vertex)
+{
+	vertex[X] -= render->Xoffset;
+	vertex[Y] -= render->Yoffset;
+}
+
 int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*valueList)
 /* numParts : how many names and values */
 {
@@ -1260,6 +1286,11 @@ int GzPutTriangle(GzRender	*render, int numParts, GzToken *nameList, GzPointer	*
 				if (!transformGzCoord(vertexA, render)) return GZ_FAILURE;
 				if (!transformGzCoord(vertexB, render)) return GZ_FAILURE;
 				if (!transformGzCoord(vertexC, render)) return GZ_FAILURE;
+
+				//add offsets
+				applyOffsets(render, vertexA);
+				applyOffsets(render, vertexB);
+				applyOffsets(render, vertexC);
 
 				break;
 			}
